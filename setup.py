@@ -1,10 +1,10 @@
 from setuptools import setup
 
 setup(
-    name="CCAM",
+    name="hopper",
     version="1.0",
     author="Pedrom Zadeh",
-    description="Characterizing collisions with acceleration maps",
+    description="Modeling single cell dynamics in confinement",
     packages=[
         "box",
         "cell",
