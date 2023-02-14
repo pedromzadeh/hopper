@@ -1,6 +1,13 @@
 import numpy as np
 
 
+def dFpol_dP(cell):
+    P_tot_target = 10
+    P_tot = np.sum(cell.phi * cell.p_field) * cell.simbox.dx**2
+    nu = 10
+    return 2 * nu * (1 - P_tot / P_tot_target) * (-1 / P_tot_target)
+
+
 def adaptive_pol_field(cell, dphi_dt, mp):
     """
     Returns the change in polarization field experienced in one timestep.
@@ -35,4 +42,5 @@ def adaptive_pol_field(cell, dphi_dt, mp):
         - (dt / tau * p_field)
         + (noise * phi)
         - (dt / tau_x * mp * phi)
+        - (dt * dFpol_dP(cell))
     )
