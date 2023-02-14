@@ -19,6 +19,7 @@ class Force:
         self.kappa = config["kappa"]
         self.omega = config["omega"]
         self.mu = config["mu"]
+        self.nu = config["nu"]
 
     def cahn_hilliard_func_deriv(self, cell):
         """
@@ -76,6 +77,11 @@ class Force:
         """
         return 4 * cell.phi * (cell.phi - 2) * (cell.phi - 1) * cell.W
 
+    def polarization_func_deriv(self, cell):
+        P_tot_target = 1
+        P_tot = np.sum(cell.phi * cell.p_field) * cell.simbox.dx**2
+        return 2 * self.nu * (1 - P_tot / P_tot_target) * (-cell.p_field / P_tot_target)
+
     def total_func_deriv(self, cell):
         """
         Computes the total functional derivative of the cell w.r.t field phi.
@@ -93,8 +99,9 @@ class Force:
         dFch_dphi = self.cahn_hilliard_func_deriv(cell)
         dFarea_dphi = self.area_func_deriv(cell)
         dFchi_dphi = self.substrate_int_func_deriv(cell)
+        dFpol_dphi = self.polarization_func_deriv(cell)
 
-        return dFch_dphi + dFarea_dphi + dFchi_dphi
+        return dFch_dphi + dFarea_dphi + dFchi_dphi + dFpol_dphi
 
     def cyto_motility_force(self, cell, grad_phi, mp):
         """
