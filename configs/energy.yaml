@@ -1,3 +1,3 @@
-kappa : 1             # strength of cell-cell repulsion
-omega : 30            # strength of cell-cell adhesion
-mu : 1000             # strength of area conservation
+kappa: 1 # strength of cell-cell repulsion
+omega: 30 # strength of cell-cell adhesion
+mu: 1000 # strength of area conservation

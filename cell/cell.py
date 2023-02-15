@@ -56,6 +56,12 @@ class Cell:
     self.eta : float
         Cell's friction coefficient.
 
+    self.nu : float
+        Specifies the strength with which polarization target is maintained.
+
+    self.P_target : float
+        Specifies the sum total of polarization field available to the cell.
+
     self.polarity_mode : str
         Specifies the modality used to update the cell's polarity.
 
@@ -185,3 +191,5 @@ class Cell:
         self.eta = config["eta"]
         self.tau = config["tau"]
         self.tau_mp = config["tau_mp"]
+        self.nu = config["nu"]
+        self.P_target = config["P_target"]
