@@ -17,7 +17,6 @@ gammas = np.linspace(1.0, 1.6, 2)
 Ds = np.linspace(0.02, 0.1, 2)
 
 default_dict = {
-    # "gamma": [1.2],
     "A": [0],
     "R_eq": [2.7],
     "R_init": [2.7],
@@ -28,6 +27,8 @@ default_dict = {
     "alpha": [80],
     "tau": [5],
     "tau_mp": [0.05],
+    "nu": [100],
+    "P_target": [50],
     "id": [0],
     "polarity_mode": [str(pol_type).upper()],
 }

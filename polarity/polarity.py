@@ -2,9 +2,9 @@ import numpy as np
 
 
 def dFpol_dP(cell):
-    P_tot_target = 10
+    P_tot_target = cell.P_target
+    nu = cell.nu
     P_tot = np.sum(cell.phi * cell.p_field) * cell.simbox.dx**2
-    nu = 10
     return 2 * nu * (1 - P_tot / P_tot_target) * (-1 / P_tot_target)
 
 
