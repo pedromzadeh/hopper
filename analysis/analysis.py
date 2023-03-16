@@ -158,7 +158,11 @@ def position_dist(data, mp_type, mu_factor, cmap=None):
         axs[i, j].set_xlim([15 * mu_factor, 35 * mu_factor])
         axs[i, j].set_ylim([15 * mu_factor, 35 * mu_factor])
 
-    axs[2, 2].remove()
+    # remove axes that are empty
+    for i, j in zip(x.flatten(), y.flatten()):
+        if not axs[i, j].collections:
+            axs[i, j].remove()
+
     plt.tight_layout()
     plt.subplots_adjust(hspace=0.5, wspace=0.5)
     plt.show()
