@@ -43,19 +43,22 @@ def calc_v_a_from_position(x, dt):
     return pd.DataFrame(res.T, columns=["x", "v", "a"])
 
 
-def map_a(binned_df, nbins, x1bin_lbl, x2bin_lbl, min_pts):
+def calc_F_sigma(binned_df, dt, nbins, min_pts):
 
-    acc_map = np.empty(shape=(nbins, nbins))
-    acc_map[:] = np.nan
+    F = np.empty(shape=(nbins, nbins))
+    F[:] = np.nan
 
-    # x1 is along the x-axis
-    # x2 is along the y-axis
-    for (j, i), df in binned_df.groupby([x1bin_lbl, x2bin_lbl]):
+    sigma = np.empty(shape=(nbins, nbins))
+    sigma[:] = np.nan
+
+    # F(x, v)
+    for (j, i), df in binned_df.groupby(["x_bin", "v_bin"]):
         if len(df.a) < min_pts:
             continue
-        acc_map[i, j] = df.a.mean()
+        F[i, j] = df.a.mean()
+        sigma[i, j] = np.sqrt(dt * np.mean((df.a.values - F[i, j]) ** 2))
 
-    return acc_map
+    return F, sigma
 
 
 def get_bin_indices(df, nbins):
@@ -276,28 +279,76 @@ def streamplot(
         plt.close(fig_temp)
 
 
-def map_imshow(acc_map, ax, bounds, nbins, cbar=False, interp="none"):
-    xmin, xmax, vmin, vmax = bounds
+def imshow_F_sigma(maps, bounds, title, interp="none"):
 
-    im = ax.imshow(
-        acc_map,
-        origin="lower",
-        interpolation=interp,
-        cmap="jet",
-        extent=[xmin, xmax, vmin, vmax],
+    fig1, axs = plt.subplots(1, 3, figsize=(15, 3.5), dpi=300)
+    xmin, xmax, vmin, vmax, nbins = bounds
+    axs[0].set_title(title["title"], fontsize=title["size"], y=1.1)
+    axs[0].set_xlabel(r"$x$ ($\mu$m)")
+    axs[0].set_ylabel(r"$v$ ($\mu$m/hr)")
+
+    F, sigma = maps
+
+    for field, cbar_title, cmap, ax in zip(
+        maps,
+        [r"$F$ ($\mu$m/hr$^2$)", r"$\sigma$ ($\mu$m hr$^{-3/2}$)"],
+        ["jet", "viridis"],
+        axs,
+    ):
+        im = ax.imshow(
+            field,
+            origin="lower",
+            interpolation=interp,
+            cmap=cmap,
+            extent=[xmin, xmax, vmin, vmax],
+        )
+
+        cbar = plt.colorbar(im, ax=ax)
+        cbar.set_label(cbar_title)
+        ax.set_aspect("auto")
+        # ax.set_xlabel(r"$x$ ($\mu$m)")
+        # ax.set_ylabel(r"$v$ ($\mu$m/hr)")
+
+    # plot streamplots for F(x, v)
+    _plot_trajs(F, bounds, axs[2])
+
+    fig1.subplots_adjust(wspace=0.75)
+
+
+def _plot_trajs(F, bounds, ax):
+    xmin, xmax, vmin, vmax, nbins = bounds
+
+    # make stremplot for F(x, v)
+    buffer = 0.5
+    X, Y = np.meshgrid(
+        np.linspace(xmin + buffer, xmax - buffer, nbins),
+        np.linspace(vmin + buffer, vmax - buffer, nbins),
     )
 
-    if cbar:
-        cbar = plt.colorbar(im, ax=ax)
-        cbar.set_label(r"$F$ ($\mu$m/hr$^2$)")
-    ax.set_xlabel(r"$x$ ($\mu$m)")
-    ax.set_ylabel(r"$v$ ($\mu$m/hr)")
-    ax.set_aspect("equal")
+    x = np.linspace(xmin, xmax, 100)
+    y = (vmax - vmin) / (xmax - xmin) * (x - xmin) + vmin
 
+    # if initial condition exists in F, make trajectory
+    for xx, yy in zip(x, y):
+        try:
+            ax.streamplot(
+                X,
+                Y,
+                Y,
+                F,
+                start_points=[[xx, yy]],
+                integration_direction="forward",
+                broken_streamlines=True,
+                density=10,
+                color="black",
+            )
+        except:
+            continue
 
-def _set_ax_title(ax, df):
-    beta = df.beta.iloc[0]
-    gamma = df.gamma.iloc[0]
-    D = df.D.iloc[0]
+    ax.quiver(
+        X, Y, Y, F, F, angles="xy", scale_units="xy", scale=80, width=0.01, cmap="jet"
+    )
 
-    ax.set_title(rf"$\beta$ = {beta}, $\gamma$ = {gamma}, $D$ = {D}", y=1.1)
+    ax.set_aspect("auto")
+    # ax.set_xlabel(r"$x$ ($\mu$m)")
+    # ax.set_ylabel(r"$v$ ($\mu$m/hr)")
