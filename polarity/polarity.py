@@ -1,5 +1,29 @@
 import numpy as np
 
+from polarity.mvgaussian import MVGaussian
+
+
+def mvg_noise_patch(cell, dphi_dt):
+
+    cntrs = cell.contour[0]  # [y, x]
+    probs = np.fabs(dphi_dt)
+    cntrs_probs = np.array([probs[int(y), int(x)] for y, x in cntrs])
+    cntrs_probs[np.isnan(cntrs_probs)] = 0
+    cntrs_probs /= np.sum(cntrs_probs)
+
+    # pick a contour point according to cntrs_probs
+    c = cntrs[np.random.choice(range(len(cntrs)), p=cntrs_probs)][::-1]
+    means = np.array(c)
+    cov = np.array([[8, 4], [4, 8]])
+
+    d = np.linspace(0, 200, 200)
+    x, y = np.meshgrid(d, d)
+    X = np.array(list(zip(x.flatten(), y.flatten())))
+
+    MVG_f = MVGaussian(means, cov)
+
+    return MVG_f.pdf(X).reshape(200, 200)
+
 
 def dFpol_dP(cell):
     P_tot_target = cell.P_target
