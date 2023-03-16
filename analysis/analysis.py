@@ -276,20 +276,28 @@ def streamplot(
         plt.close(fig_temp)
 
 
-def map_imshow(acc_map, ax, bounds, nbins, cbar=False):
+def map_imshow(acc_map, ax, bounds, nbins, cbar=False, interp="none"):
     xmin, xmax, vmin, vmax = bounds
 
-    im = ax.imshow(acc_map, origin="lower", interpolation="none", cmap="rainbow")
-    ax.set_xticks(
-        [0, nbins // 2, nbins],
-        [round(xmin, 2), round((xmin + xmax) / 2, 2), round(xmax, 2)],
+    im = ax.imshow(
+        acc_map,
+        origin="lower",
+        interpolation=interp,
+        cmap="jet",
+        extent=[xmin, xmax, vmin, vmax],
     )
-    ax.set_yticks(
-        [0, nbins // 2, nbins],
-        [round(vmin, 2), round((vmin + vmax) / 2, 0), round(vmax, 2)],
-    )
+
     if cbar:
-        cbar = ax.gcf().colorbar(im, ax=ax)
+        cbar = plt.colorbar(im, ax=ax)
         cbar.set_label(r"$F$ ($\mu$m/hr$^2$)")
-        ax.set_xlabel(r"$x$ ($\mu$m)")
-        ax.set_ylabel(r"$v$ ($\mu$m/hr)")
+    ax.set_xlabel(r"$x$ ($\mu$m)")
+    ax.set_ylabel(r"$v$ ($\mu$m/hr)")
+    ax.set_aspect("equal")
+
+
+def _set_ax_title(ax, df):
+    beta = df.beta.iloc[0]
+    gamma = df.gamma.iloc[0]
+    D = df.D.iloc[0]
+
+    ax.set_title(rf"$\beta$ = {beta}, $\gamma$ = {gamma}, $D$ = {D}", y=1.1)
