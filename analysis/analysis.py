@@ -58,13 +58,17 @@ def map_a(binned_df, nbins, x1bin_lbl, x2bin_lbl, min_pts):
     return acc_map
 
 
-def get_bin_indices(df, nbins, x1=None, x2=None):
+def get_bin_indices(df, nbins):
 
-    assert x1 is not None
-    assert x2 is not None
+    # define binned space
+    bounds = df.agg(["min", "max"])
+    xmin, xmax = bounds["x"]
+    vmin, vmax = bounds["v"]
+    dx = (xmax - xmin) / nbins
+    dv = (vmax - vmin) / nbins
 
-    x1_lbl, x1_min, dx1 = x1
-    x2_lbl, x2_min, dx2 = x2
+    x1_lbl, x1_min, dx1 = ("x", xmin, dx)
+    x2_lbl, x2_min, dx2 = ("v", vmin, dv)
 
     assert set([x1_lbl, x2_lbl]).issubset(df.columns)
 
