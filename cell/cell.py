@@ -153,7 +153,7 @@ class Cell:
         N_mesh, dx = self.simbox.N_mesh, self.simbox.dx
         phi = np.zeros((N_mesh, N_mesh))
         center, R = self.center, self.R_init
-        epsilon = 1
+        epsilon = self.lam
         one_dim = np.arange(0, N_mesh, 1)
         x, y = np.meshgrid(one_dim, one_dim)
         r = np.sqrt((center[1] - y * dx) ** 2 + (center[0] - x * dx) ** 2)
