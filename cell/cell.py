@@ -164,7 +164,7 @@ class Cell:
         return 1 / 2 + 1 / 2 * np.tanh(-(r - R) / epsilon)
 
     def _init_center(self):
-        d = 73 / (2 * 6)
+        d = self.simbox.sub_config["sub_sep"] / (2 * 6)
         x1 = self.simbox.L_box / 2 - d
         x2 = self.simbox.L_box / 2 + d
 
