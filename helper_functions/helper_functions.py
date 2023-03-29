@@ -117,7 +117,7 @@ def compute_gradients(field, dx):
     return (grad_x, grad_y, laplacian)
 
 
-def evolve_cell(cell, force, mp):
+def evolve_cell(cell, force, mp, n):
     """
     Evolves the cell by updating its class variables from time t to time t + dt.
     Attributes updated are
@@ -138,6 +138,9 @@ def evolve_cell(cell, force, mp):
 
     mp : Substrate object
         Specifies the micropattern.
+
+    n : int
+        Simulation timestep.
     """
 
     # needed more than once
@@ -152,7 +155,7 @@ def evolve_cell(cell, force, mp):
     dphi_dt = (phi_i_next - phi) / dt
 
     # polarization field (n+1)
-    p_field_next = cell.p_field + polarity.adaptive_pol_field(cell, dphi_dt, mp)
+    p_field_next = cell.p_field + polarity.adaptive_pol_field(cell, dphi_dt, mp, n)
 
     # compute motility forces at time n
     fx_motil, fy_motil = force.cyto_motility_force(cell, grad_phi, mp)
