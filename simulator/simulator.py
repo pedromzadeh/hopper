@@ -74,6 +74,9 @@ class Simulator:
         # collect cell positions
         cms = pd.DataFrame()
 
+        # noise patch -- init MVG generator for the cell
+        self._mvg_generator(cell)
+
         # carry out the simulation
         for n in range(simbox.sim_time):
 
@@ -95,12 +98,12 @@ class Simulator:
                 Figure.view_pol_field(
                     cell,
                     chi,
-                    dpi=75,
+                    dpi=150,
                     path=os.path.join(paths["figures"], f"img_{n}.png"),
                 )
 
             # update each cell to the next time step
-            hf.evolve_cell(cell, force_calculator, chi)
+            hf.evolve_cell(cell, force_calculator, chi, n)
 
             # if cell has escaped, end simulation
             if not self._cell_inside(cell, chi):
@@ -211,3 +214,14 @@ class Simulator:
 
     def _cell_whole(self, cell):
         return len(cell.contour) == 1
+
+    def _mvg_generator(self, cell):
+        import numpy as np
+        from polarity.mvgaussian import MVGaussian
+
+        N_mesh = cell.simbox.N_mesh
+        d = np.linspace(0, N_mesh, N_mesh)
+        x, y = np.meshgrid(d, d)
+        X = np.array(list(zip(x.flatten(), y.flatten())))
+
+        cell.mvg_gen = MVGaussian(X)
