@@ -140,7 +140,7 @@ def evolve_cell(cell, force, mp, n):
         Specifies the micropattern.
 
     n : int
-        Simulation timestep.
+        Simulation timestep. Needed for deciding when to add MVG patches.
     """
 
     # needed more than once
@@ -150,12 +150,26 @@ def evolve_cell(cell, force, mp, n):
     phi = cell.phi
     dt = cell.simbox.dt
 
+    # contour PMF to add mvg patch
+    p1 = polarity.cntr_probs_filopodia(cell, grad_phi, mp)
+    p2 = polarity.cntr_probs_feedback(cell, grad_phi)
+    cntr_probs = p1 * p2
+    cntr_probs /= cntr_probs.sum()
+
+    # if time is right, add MVG
+    if n % cell.pol_model_args["tau_add_mvg"] == 0:
+        mvg_patch = cell.pol_model_args["patch_mag"] * polarity.mvg_patch(
+            cell, cntr_probs
+        )
+    else:
+        mvg_patch = 0
+
     # phi_(n+1)
     phi_i_next, dF_dphi = _update_field(cell, grad_phi, force)
     dphi_dt = (phi_i_next - phi) / dt
 
     # polarization field (n+1)
-    p_field_next = cell.p_field + polarity.adaptive_pol_field(cell, dphi_dt, mp, n)
+    p_field_next = polarity.update_field(cell, mp, mvg_patch, cell.pol_model_args)
 
     # compute motility forces at time n
     fx_motil, fy_motil = force.cyto_motility_force(cell, grad_phi, mp)
