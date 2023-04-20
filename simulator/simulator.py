@@ -153,7 +153,7 @@ class Simulator:
         # buffer = sub_config["buffer"]
         sub = Substrate(N_mesh, L_box, xi)
         if kind == "two-state":
-            chi = sub.two_state_sub(bridge_width=20)
+            chi = sub.two_state_sub(bridge_width=15)
         elif kind == "rectangular":
             chi = sub.rectangular()
         else:
