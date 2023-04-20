@@ -172,6 +172,17 @@ class Cell:
         return centers[self.rng.randint(0, 2)]
 
     def _load_parameters(self, path):
+        def _polarity_params(config):
+            return {
+                "tau_add_mvg": config["tau_add_mvg"],
+                "patch_mag": config["patch_mag"],
+                "tau": config["tau"],
+                "tau_x": config["tau_x"],
+                "tau_mvg": config["tau_mvg"],
+                "tau_ten": config["tau_ten"],
+                "perim_0" : config["perim_0"]
+            }
+
         with open(path, "r") as file:
             config = yaml.safe_load(file)
 
@@ -182,14 +193,9 @@ class Cell:
         self.gamma = config["gamma"]
         self.A = config["A"]
         self.g = config["g"]
-        self.beta = config["beta"]
         self.alpha = config["alpha"]
-        self.D = config["D"]
         self.lam = config["lam"]
         self.polarity_mode = config["polarity_mode"]
         self.N_wetting = config["N_wetting"]
         self.eta = config["eta"]
-        self.tau = config["tau"]
-        self.tau_mp = config["tau_mp"]
-        self.nu = config["nu"]
-        self.P_target = config["P_target"]
+        self.pol_model_args = _polarity_params(config)
