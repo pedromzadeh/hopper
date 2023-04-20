@@ -8,40 +8,45 @@ pol_type = "IM"
 N_cells = 1
 
 # parameters to sweep through
-#   - beta  : strength with which pol field responds to shape changes
-#   - tau   : timescale of pol field decay
-#   - D     : magnitude of noise
+#   - p0    : threshold perimeter
+#   - gamma : cell line tension
 
-betas = np.linspace(1.2, 1.6, 2)
-gammas = np.linspace(1.0, 1.6, 2)
-Ds = np.linspace(0.02, 0.1, 2)
+gammas = np.linspace(1.0, 1.0, 1)
+p0s = np.linspace(2 * np.pi * 4.5, 2 * np.pi * 4.5, 1)
 
-default_dict = {
+cell_params = {
     "A": [0],
-    "R_eq": [2.7],
-    "R_init": [2.7],
+    "N_wetting": [500],
+    "R_eq": [3.0],
+    "R_init": [3.0],
     "eta": [0.5],
     "g": [0],
     "lam": [0.8],
-    "N_wetting": [500],
-    "alpha": [80],
-    "tau": [5],
-    "tau_mp": [0.05],
-    "nu": [100],
-    "P_target": [50],
+    "alpha": [50],
     "id": [0],
     "polarity_mode": [str(pol_type).upper()],
 }
 
-param_grid = {
-    "beta": list(map(float, betas)),
-    "gamma": list(map(float, gammas)),
-    "D": list(map(float, Ds)),
-} | default_dict
+pol_model_args = {
+    "tau_add_mvg": [5],
+    "patch_mag": [1000],
+    "tau": [0.5],
+    "tau_x": [0.02],
+    "tau_mvg": [0.1],
+    "tau_ten": [0.1],
+}
+
+param_grid = (
+    {
+        "gamma": list(map(float, gammas)),
+        "perim_0": list(map(float, p0s)),
+    }
+    | cell_params
+    | pol_model_args
+)
 
 grid = list(ParameterGrid(param_grid))
 
-print(f"betas: {betas} \ngammas: {gammas}\nDs: {Ds}\n")
 print(f"Total # of configs: {len(grid)}")
 
 root = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"{pol_type}")
