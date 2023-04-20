@@ -36,7 +36,7 @@ class Force:
         """
         _, _, lap = hf.compute_gradients(cell.phi, cell.simbox.dx)
         gamma, lam = cell.gamma, cell.lam
-        term1 = 8 * (gamma / lam) * cell.phi * (cell.phi - 1) * (2 * cell.phi - 1)
+        term1 = 36 * (gamma / lam) * cell.phi * (cell.phi - 1) * (2 * cell.phi - 1)
         term2 = -2 * gamma * lam * lap
         return term1 + term2
 
