@@ -4,4 +4,5 @@ N_mesh: 200 # lattice grid size
 L_box: 50 # size of simulation box in real units
 stat_collection_freq: 250 # frequency of collecting pre-collision stats
 simbox_view_freq: 250 # frequency of outputting the view of simbox
-substrate: { xi: 0.2, kind: "rectangular", buffer: 0 }
+substrate: { "xi": 0.2, "kind": "rectangular", "buffer": 0, "sub_sep": 0 }
+# {"xi": 0.2, "kind": "two-state", "buffer": 0, "sub_sep": 73}
