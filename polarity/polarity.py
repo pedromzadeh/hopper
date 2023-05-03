@@ -1,10 +1,12 @@
 import numpy as np
+from scipy.interpolate import RegularGridInterpolator
 
 
-def _polarity_at_cntrs(cell, grad_phi, l):
+def _polarity_at_cntrs(cell, grad_phi, method="linear"):
     """
-    Evaluates the polarity field at the lattice site integer(r - nl) and
-    assigns that as the field value at contour point r.
+    Evaluates the polarity field a little below the cell boundary
+    and assigns that value as the field's value at cell contour points.
+    This can either be interpolated or the pixel value of the field.
 
     Parameters
     ----------
@@ -14,8 +16,10 @@ def _polarity_at_cntrs(cell, grad_phi, l):
     grad_phi : np.ndarray of shape (2, N_mesh, N_mesh)
         Gradient of the phase-field, with grad_x, grad_y, respectively.
 
-    l : float
-        Amount by which we intrude into the cell, in phase-field units.
+    method : str
+        "pixel" for pixel-based value;
+        one of "linear", "nearest", "slinear", "cubic", "quintic", "pchip"
+        for interpolated values.
 
     Returns
     -------
@@ -26,6 +30,33 @@ def _polarity_at_cntrs(cell, grad_phi, l):
     ----
         Negative polarity field values are set to 0.
     """
+
+    if method == "pixel":
+        return _pixel_value_at_cntrs(cell, grad_phi)
+
+    return _interp_value_at_cntrs(cell, grad_phi, method)
+
+
+def _interp_value_at_cntrs(cell, grad_phi, method):
+
+    cntr = cell.contour[0]
+    grad_phi_norm = np.sqrt(np.sum(grad_phi * grad_phi, axis=0)) + 1e-10
+    n_hat = -grad_phi / grad_phi_norm
+    l = 2
+    cntr = np.array(
+        [
+            [y - l * n_hat[1][int(y), int(x)], x - l * n_hat[0][int(y), int(x)]]
+            for y, x in cntr
+        ]
+    )
+
+    p_field = np.where(cell.p_field > 0, cell.p_field, 0)
+    x = np.arange(cell.simbox.N_mesh)
+    interp = RegularGridInterpolator((x, x), p_field, method=method)
+    return interp(cntr)
+
+
+def _pixel_value_at_cntrs(cell, grad_phi, l=3):
     cntr = cell.contour[0][:, ::-1]
     pol = np.where(cell.p_field > 0, cell.p_field, 0)
     grad_phi_norm = np.sqrt(np.sum(grad_phi * grad_phi, axis=0)) + 1e-10
@@ -134,7 +165,7 @@ def cntr_probs_filopodia(cell, grad_phi, mp, l=5, norm=True):
     return probs
 
 
-def cntr_probs_feedback(cell, grad_phi, l=3, norm=True):
+def cntr_probs_feedback(cell, grad_phi, norm=True):
     """
     Assigns probabilities to each contour point to experience a protrusive patch given
     the positive feedback at already highly protrusive sites. Bascially, sites that are
@@ -148,9 +179,6 @@ def cntr_probs_feedback(cell, grad_phi, l=3, norm=True):
     grad_phi : np.ndarray of shape (2, N_mesh, N_mesh)
         Gradient of the phase-field, with grad_x, grad_y, respectively.
 
-    l : float, optional
-        Amount by which we intrude into the cell, in phase-field units, by default 3.
-
     norm : bool, optional
         If True, probabilities are normalized, else not, by default True
 
@@ -162,7 +190,7 @@ def cntr_probs_feedback(cell, grad_phi, l=3, norm=True):
     # probs due to feedback
     cntr = cell.contour[0][:, ::-1]
     in_frame_cntr = cntr * cell.simbox.dx - cell.cm[1]
-    p_at_cntr = _polarity_at_cntrs(cell, grad_phi, l)
+    p_at_cntr = _polarity_at_cntrs(cell, grad_phi)
     radii = np.linalg.norm(in_frame_cntr, axis=1)
     p = p_at_cntr * radii
 
