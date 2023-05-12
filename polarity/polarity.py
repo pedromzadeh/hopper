@@ -192,7 +192,7 @@ def cntr_probs_feedback(cell, grad_phi, norm=True):
     in_frame_cntr = cntr * cell.simbox.dx - cell.cm[1]
     p_at_cntr = _polarity_at_cntrs(cell, grad_phi)
     radii = np.linalg.norm(in_frame_cntr, axis=1)
-    p = p_at_cntr * radii
+    p = p_at_cntr * radii + 1e-5
 
     if norm:
         return p / p.sum()
