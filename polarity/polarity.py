@@ -244,7 +244,7 @@ def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, c=None):
     return cell.mvg_gen.pdf(means, cov).reshape(N_mesh, N_mesh)
 
 
-def update_field(cell, mp, mvg_patch, model_args):
+def update_field(cell, mp, mvg_patch, dphi_dt, model_args):
     """
     Returns the updated polarity field.
 
@@ -277,6 +277,7 @@ def update_field(cell, mp, mvg_patch, model_args):
     tau_mvg = model_args["tau_mvg"]
     tau_ten = model_args["tau_ten"]
     perim_0 = model_args["perim_0"]
+    beta = model_args["beta"]
 
     # membrane tension
     mem_tension = _cell_tension(cell, perim_0)
@@ -284,6 +285,7 @@ def update_field(cell, mp, mvg_patch, model_args):
     return p_field + (
         -(dt / tau * p_field)
         + (dt / tau_mvg * mvg_patch * phi)
+        + (dt * beta * dphi_dt * phi)
         - (dt / tau_x * mp * phi)
         - (dt / tau_ten * mem_tension)
     )

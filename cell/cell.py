@@ -180,7 +180,8 @@ class Cell:
                 "tau_x": config["tau_x"],
                 "tau_mvg": config["tau_mvg"],
                 "tau_ten": config["tau_ten"],
-                "perim_0" : config["perim_0"]
+                "perim_0" : config["perim_0"],
+                "beta" : config["beta"]
             }
 
         with open(path, "r") as file:
