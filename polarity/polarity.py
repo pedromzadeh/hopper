@@ -42,7 +42,7 @@ def _interp_value_at_cntrs(cell, grad_phi, method):
     cntr = cell.contour[0]
     grad_phi_norm = np.sqrt(np.sum(grad_phi * grad_phi, axis=0)) + 1e-10
     n_hat = -grad_phi / grad_phi_norm
-    l = 2
+    l = 0
     cntr = np.array(
         [
             [y - l * n_hat[1][int(y), int(x)], x - l * n_hat[0][int(y), int(x)]]
