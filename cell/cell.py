@@ -178,7 +178,6 @@ class Cell:
                 "patch_mag": config["patch_mag"],
                 "tau": config["tau"],
                 "tau_x": config["tau_x"],
-                "tau_mvg": config["tau_mvg"],
                 "tau_ten": config["tau_ten"],
                 "perim_0" : config["perim_0"],
                 "beta" : config["beta"]

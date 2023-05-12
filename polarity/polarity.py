@@ -274,7 +274,6 @@ def update_field(cell, mp, mvg_patch, dphi_dt, model_args):
     dt = cell.simbox.dt
     tau = model_args["tau"]
     tau_x = model_args["tau_x"]
-    tau_mvg = model_args["tau_mvg"]
     tau_ten = model_args["tau_ten"]
     perim_0 = model_args["perim_0"]
     beta = model_args["beta"]
@@ -284,7 +283,7 @@ def update_field(cell, mp, mvg_patch, dphi_dt, model_args):
 
     return p_field + (
         -(dt / tau * p_field)
-        + (dt / tau_mvg * mvg_patch * phi)
+        + (dt * mvg_patch * phi)
         + (dt * beta * dphi_dt * phi)
         - (dt / tau_x * mp * phi)
         - (dt / tau_ten * mem_tension)
