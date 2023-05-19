@@ -2,6 +2,10 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
 
+def _sigmoid(x, center, eps):
+    return 1 / (1 + np.exp((-x + center) / eps))
+
+
 def _polarity_at_cntrs(cell, grad_phi, method="linear"):
     """
     Evaluates the polarity field a little below the cell boundary
@@ -72,9 +76,9 @@ def _pixel_value_at_cntrs(cell, grad_phi, l=3):
     return np.array([pol[int(y), int(x)] for x, y in cntr_shifted])
 
 
-def _cell_tension(cell, perim_0):
+def shape_induced_stress(cell, perim_0):
     """
-    Returns a measure of cell membrane tension according to its perimeter.
+    Returns an estimate for the stress caused by elongated shapes.
 
     Parameters
     ----------
@@ -91,13 +95,10 @@ def _cell_tension(cell, perim_0):
     """
     cntr = cell.contour[0][:, ::-1] * cell.simbox.dx
     perim = np.sqrt(np.sum(np.diff(cntr, axis=0) ** 2, axis=1)).sum()
-
-    if perim > perim_0:
-        return perim / perim_0
-    return 0
+    return (perim / perim_0) ** 2 if perim > perim_0 else 0
 
 
-def dFpol_dP(cell):
+def dFpol_dP(cell, nu, target):
     """
     Returns change in cell polarity so to keep total polarization constant.
 
@@ -106,15 +107,19 @@ def dFpol_dP(cell):
     cell : Cell object
         The cell whose polarization field is in question.
 
+    nu : float
+        Specifies the strength of this term. 0 turns it off.
+
+    target : float
+        Specifies the constant target polarization amount.
+
     Returns
     -------
     float
         The scalar change in polarization field.
     """
-    P_tot_target = cell.P_target
-    nu = cell.nu
     P_tot = np.sum(cell.phi * cell.p_field) * cell.simbox.dx**2
-    return 2 * nu * (1 - P_tot / P_tot_target) * (-1 / P_tot_target)
+    return 2 * nu * (1 - P_tot / target) * (-1 / target)
 
 
 def cntr_probs_filopodia(cell, grad_phi, mp, l=5, norm=True):
@@ -165,7 +170,7 @@ def cntr_probs_filopodia(cell, grad_phi, mp, l=5, norm=True):
     return probs
 
 
-def cntr_probs_feedback(cell, grad_phi, norm=True):
+def cntr_probs_feedback(cell, grad_phi, R_c=None, norm=True):
     """
     Assigns probabilities to each contour point to experience a protrusive patch given
     the positive feedback at already highly protrusive sites. Bascially, sites that are
@@ -178,6 +183,11 @@ def cntr_probs_feedback(cell, grad_phi, norm=True):
 
     grad_phi : np.ndarray of shape (2, N_mesh, N_mesh)
         Gradient of the phase-field, with grad_x, grad_y, respectively.
+
+    R_c : float, optional
+        If given, feedback turns on smoothly for radii larger than R_c and
+        is off for those smaller. If None, feedback is on for all radii.
+        By default None
 
     norm : bool, optional
         If True, probabilities are normalized, else not, by default True
@@ -192,14 +202,18 @@ def cntr_probs_feedback(cell, grad_phi, norm=True):
     in_frame_cntr = cntr * cell.simbox.dx - cell.cm[1]
     p_at_cntr = _polarity_at_cntrs(cell, grad_phi)
     radii = np.linalg.norm(in_frame_cntr, axis=1)
+
+    if R_c is not None:
+        radii = _sigmoid(radii, R_c, eps=0.5)
+
     p = p_at_cntr * radii + 1e-5
 
-    if norm:
+    if norm and p.sum() > 0:
         return p / p.sum()
     return p
 
 
-def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, c=None):
+def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, cntr_pt=None):
     """
     Returns a multivariate Gaussian (mvg) centered at a contour point, which is
     either passed as input or drawn from the input probability mass distribution.
@@ -219,7 +233,7 @@ def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, c=None):
     cov_ij : float, optional
         Off-diagonal element of the covariance matrix, by default 0
 
-    c : list or np.ndarray of shape (2, ), optional
+    cntr_pt : list or np.ndarray of shape (2, ), optional
         Specific contour point about which an mvg patch is created, by default None
 
     Returns
@@ -228,16 +242,14 @@ def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, c=None):
         A multivariate Gaussian defined in the support space about a contour point.
     """
 
-    if c is None and cntr_probs is None:
-        raise ValueError(
-            "Either specify a particular contour point or a probability mass to draw a point from."
-        )
+    def _pick_c():
+        if cntr_pt is not None:
+            return cntr_pt
 
-    if c is None:
-        # pick a contour point according to cntrs_probs
         cntr = cell.contour[0][:, ::-1]
-        c = cntr[cell.rng.choice(range(len(cntr)), p=cntr_probs)]
+        return cntr[cell.rng.choice(range(len(cntr)), p=cntr_probs)]
 
+    c = _pick_c()
     means = np.array(c)
     cov = np.array([[cov_ii, cov_ij], [cov_ij, cov_ii]])
     N_mesh = cell.simbox.N_mesh
@@ -259,6 +271,9 @@ def update_field(cell, mp, mvg_patch, dphi_dt, model_args):
     mvg_patch : np.ndarray of shape (N_mesh, N_mesh)
         A multivariate Gaussian acting as a protrusive impulse.
 
+    dphi_dt : np.ndarray of shape (N_mesh, N_mesh)
+        Instantaneous change in cell shape.
+
     model_args : dict
         Relevant model parameters -- tau, tau_x, tau_ten, tau_mvg, perim_0
 
@@ -279,12 +294,13 @@ def update_field(cell, mp, mvg_patch, dphi_dt, model_args):
     beta = model_args["beta"]
 
     # membrane tension
-    mem_tension = _cell_tension(cell, perim_0)
+    mem_tension = shape_induced_stress(cell, perim_0)
 
     return p_field + (
-        -(dt / tau * p_field)
-        + (dt * mvg_patch * phi)
-        + (dt * beta * dphi_dt * phi)
+        (dt * mvg_patch * phi)
+        - (dt / tau * p_field)
         - (dt / tau_x * mp * phi)
         - (dt / tau_ten * mem_tension)
+        + (dt * beta * dphi_dt * phi)
+        - (dt * dFpol_dP(cell, nu=0, target=-100))
     )

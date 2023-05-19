@@ -174,13 +174,13 @@ class Cell:
     def _load_parameters(self, path):
         def _polarity_params(config):
             return {
-                "tau_add_mvg": config["tau_add_mvg"],
-                "patch_mag": config["patch_mag"],
+                "add_rate": config["add_rate"],
+                "mag_rate": config["mag_rate"],
                 "tau": config["tau"],
                 "tau_x": config["tau_x"],
                 "tau_ten": config["tau_ten"],
-                "perim_0" : config["perim_0"],
-                "beta" : config["beta"]
+                "perim_0": config["perim_0"],
+                "beta": config["beta"],
             }
 
         with open(path, "r") as file:
@@ -198,4 +198,4 @@ class Cell:
         self.polarity_mode = config["polarity_mode"]
         self.N_wetting = config["N_wetting"]
         self.eta = config["eta"]
-        self.pol_model_args = _polarity_params(config)
+        self.pol_model_kwargs = _polarity_params(config)

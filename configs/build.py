@@ -7,11 +7,7 @@ from sklearn.model_selection import ParameterGrid
 pol_type = "IM"
 N_cells = 1
 
-# parameters to sweep through
-#   - p0    : threshold perimeter
-#   - gamma : cell line tension
-
-gammas = np.linspace(1.0, 1.0, 1)
+gammas = np.linspace(1.2, 1.2, 1)
 p0s = np.linspace(2 * np.pi * 4.5, 2 * np.pi * 4.5, 1)
 
 cell_params = {
@@ -28,12 +24,12 @@ cell_params = {
 }
 
 pol_model_args = {
-    "tau_add_mvg": [5],
-    "patch_mag": [1000],
+    "add_rate": [5],
+    "mag_rate": [50000],
     "tau": [0.5],
     "tau_x": [0.02],
-    "tau_mvg": [0.1],
-    "tau_ten": [0.1],
+    "tau_ten": [1.],
+    "beta": [1.]
 }
 
 param_grid = (

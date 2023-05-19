@@ -22,7 +22,7 @@ for grid_id in range(8):
         print(f"Making a movie for grid {grid_id} and run {run_id}...")
         cmd = (
             "ffmpeg -i "
-            f"{root}/img_%d.png -b:v 4M -s 600x600 -pix_fmt yuv420p "
+            f"{root}/img_%d.png -b:v 4M -s 600x600 -pix_fmt yuv420p -filter:v 'setpts=1.5*PTS' "
             f"mov_{run_id}_{grid_id}.mp4 -y -hide_banner -loglevel fatal"
         )
         os.system(cmd)
