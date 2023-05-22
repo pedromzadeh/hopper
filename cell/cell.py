@@ -175,7 +175,8 @@ class Cell:
         def _polarity_params(config):
             return {
                 "add_rate": config["add_rate"],
-                "mag_rate": config["mag_rate"],
+                "mag_mean": config["mag_mean"],
+                "mag_std": config["mag_std"],
                 "tau": config["tau"],
                 "tau_x": config["tau_x"],
                 "tau_ten": config["tau_ten"],
