@@ -204,7 +204,7 @@ def cntr_probs_feedback(cell, grad_phi, R_c=None, norm=True):
     radii = np.linalg.norm(in_frame_cntr, axis=1)
 
     if R_c is not None:
-        radii = _sigmoid(radii, R_c, eps=0.5)
+        radii = _sigmoid(radii, R_c, eps=0.1)
 
     p = p_at_cntr * radii + 1e-5
 
