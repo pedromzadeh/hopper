@@ -122,7 +122,7 @@ class Simulator:
             Defines the box.
 
         cell_config : str
-            Path to directory containing cell's config.
+            Path to cell's yaml config file.
 
         cell_rng_seed : int
             Sets the seed for local instance of Cell's bit generator.
@@ -154,15 +154,9 @@ class Simulator:
         else:
             raise ValueError(f"{kind} for substrate is not understood.")
 
-        # read cell config files && ensure only 2 existr
-        # IMPORTANT -- glob returns arbitrary order, sort
-        config_file = sorted(glob.glob(os.path.join(cell_config, "cell*")))
-        if len(config_file) != 1:
-            raise ValueError("Ensure there is exactly 1 configuration file.")
-
         # initialize cells
         # set the cumulative substrate they will interact with
-        cell = Cell(config_file[0], simbox, cell_rng_seed)
+        cell = Cell(cell_config, simbox, cell_rng_seed)
         cell.W = 0.5 * cell.g * chi
 
         return cell, chi
@@ -175,7 +169,7 @@ class Simulator:
         )
 
         CELL_CONFIG = os.path.join(
-            self.root_dir, f"configs/{polarity_type}/grid_id{grid_id}", "cell.yaml"
+            self.root_dir, f"configs/{polarity_type}/grid_id{grid_id}", "cell0.yaml"
         )
 
         run_root = os.path.join(
