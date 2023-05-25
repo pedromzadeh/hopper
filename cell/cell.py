@@ -37,18 +37,25 @@ class Cell:
     self.beta : float
         Specifies how strongly shape changes affect the polarization field.
 
+    self.mag_mean : float
+        Specifies the mean magnitude of the MVG patch for polarization field.
+
+    self.mag_std : float
+        Specifies the variance of magnitude of the MVG patch for polarization field.
+
     self.alpha : float
         Specifies the magnitude of motility force.
 
     self.tau : float
         Specifies the decay timescale of the polarization field.
 
-    self.tau_mp : float
+    self.tau_x : float
         Specifies the decay timescale of the polarization field
         due to interaction with the micro-pattern (mp).
 
-    self.D : float
-        Specifies cell diffusion coefficient.
+    self.tau_ten : float
+        Specifies the decay timescale of the polarization field
+        due to shape elongations.
 
     self.lam : float
         Specifies the phase field interfacial thickness.
@@ -58,9 +65,6 @@ class Cell:
 
     self.nu : float
         Specifies the strength with which polarization target is maintained.
-
-    self.P_target : float
-        Specifies the sum total of polarization field available to the cell.
 
     self.polarity_mode : str
         Specifies the modality used to update the cell's polarity.
@@ -180,8 +184,6 @@ class Cell:
                 "tau": config["tau"],
                 "tau_x": config["tau_x"],
                 "tau_ten": config["tau_ten"],
-                "perim_0": config["perim_0"],
-                "beta": config["beta"],
             }
 
         with open(path, "r") as file:
@@ -194,6 +196,7 @@ class Cell:
         self.gamma = config["gamma"]
         self.A = config["A"]
         self.g = config["g"]
+        self.nu = config["nu"]
         self.alpha = config["alpha"]
         self.lam = config["lam"]
         self.polarity_mode = config["polarity_mode"]

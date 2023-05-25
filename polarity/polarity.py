@@ -290,17 +290,14 @@ def update_field(cell, mp, mvg_patch, dphi_dt, model_args):
     tau = model_args["tau"]
     tau_x = model_args["tau_x"]
     tau_ten = model_args["tau_ten"]
-    perim_0 = model_args["perim_0"]
-    beta = model_args["beta"]
 
     # membrane tension
-    mem_tension = shape_induced_stress(cell, perim_0)
+    target_perimeter = 2 * np.pi * 4.5
+    mem_tension = shape_induced_stress(cell, target_perimeter)
 
     return p_field + (
         (dt * mvg_patch * phi)
         - (dt / tau * p_field)
         - (dt / tau_x * mp * phi)
         - (dt / tau_ten * mem_tension)
-        + (dt * beta * dphi_dt * phi)
-        - (dt * dFpol_dP(cell, nu=0, target=-100))
     )
