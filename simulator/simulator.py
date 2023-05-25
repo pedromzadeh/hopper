@@ -70,7 +70,7 @@ class Simulator:
         # collect cell positions
         cms = pd.DataFrame()
 
-        # noise patch -- init MVG generator for the cell
+        # init MVG generator for the cell
         self._mvg_generator(cell)
 
         # carry out the simulation
@@ -94,23 +94,22 @@ class Simulator:
                 Figure.view_pol_field(
                     cell,
                     chi,
-                    dpi=150,
+                    dpi=100,
                     path=os.path.join(paths["figures"], f"img_{n}.png"),
                 )
 
-            # update each cell to the next time step
+            # update cell to the next time step
             hf.evolve_cell(cell, force_calculator, chi, n)
 
             # if cell has escaped, end simulation
             if not self._cell_inside(cell, chi):
                 exit("Cell has escaped the sim box. Exiting run.")
 
-        # simulation is done; store data
-        cms["D"] = cell.D
-        cms["beta"] = cell.beta
-        cms["tau"] = cell.tau
+        # simulation is done; store relevant data
         cms["gamma"] = cell.gamma
-        cms["Req"] = cell.R_eq
+        cms["R_eq"] = cell.R_eq
+        cms["mag_std"] = cell.pol_model_kwargs["mag_std"]
+        cms["add_rate"] = cell.pol_model_kwargs["add_rate"]
         cms.to_csv(paths["result"])
 
     def _build_system(self, simbox, cell_config, cell_rng_seed):
