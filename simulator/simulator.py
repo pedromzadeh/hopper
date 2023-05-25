@@ -9,10 +9,6 @@ import glob
 import pandas as pd
 import os
 
-# assumption:
-#   --> cell.id == 0 is the left cell
-#   --> cell.id == 1 is the right cell
-
 
 class Simulator:
     """
@@ -173,14 +169,15 @@ class Simulator:
         return cell, chi
 
     def _define_paths(self, run_id, grid_id, polarity_type):
-        SIMBOX_CONFIG = os.path.join(self.root_dir, "configs/simbox.yaml")
         ENERGY_CONFIG = os.path.join(self.root_dir, "configs/energy.yaml")
 
-        CELL_CONFIG = os.path.join(
-            self.root_dir, f"configs/{polarity_type}/grid_id{grid_id}"
+        SIMBOX_CONFIG = os.path.join(
+            self.root_dir, f"configs/{polarity_type}/grid_id{grid_id}", "simbox.yaml"
         )
-        assert os.path.exists(CELL_CONFIG)
-        assert os.path.isdir(CELL_CONFIG)
+
+        CELL_CONFIG = os.path.join(
+            self.root_dir, f"configs/{polarity_type}/grid_id{grid_id}", "cell.yaml"
+        )
 
         run_root = os.path.join(
             self.root_dir,

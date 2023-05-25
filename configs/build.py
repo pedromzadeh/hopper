@@ -99,5 +99,5 @@ if __name__ == "__main__":
                 yaml.dump(mps[k], yfile)
 
             # write each cell config
-            with open(os.path.join(path, f"cell{0}.yaml"), "w") as yfile:
+            with open(os.path.join(path, f"cell.yaml"), "w") as yfile:
                 yaml.dump(params, yfile)
