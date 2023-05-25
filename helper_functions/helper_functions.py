@@ -156,11 +156,14 @@ def evolve_cell(cell, force, mp, n):
     cntr_probs = p1 * p2
     cntr_probs /= cntr_probs.sum()
 
-    # if time is right, add MVG
-    if n % cell.pol_model_args["tau_add_mvg"] == 0:
-        mvg_patch = cell.pol_model_args["patch_mag"] * polarity.mvg_patch(
-            cell, cntr_probs
+    # add MVG patch according to a Poisson process
+    tau_add = _poisson_add_time(cell.rng, cell.pol_model_kwargs["add_rate"])
+    if n % tau_add == 0:
+        # mag = poisson_patch_mag(cell.pol_model_kwargs["mag_rate"])
+        mag = cell.rng.normal(
+            mean=cell.pol_model_kwargs["mag_mean"], std=cell.pol_model_kwargs["mag_std"]
         )
+        mvg_patch = mag * polarity.mvg_patch(cell, cntr_probs)
     else:
         mvg_patch = 0
 
@@ -169,7 +172,7 @@ def evolve_cell(cell, force, mp, n):
     dphi_dt = (phi_i_next - phi) / dt
 
     # polarization field (n+1)
-    p_field_next = polarity.update_field(cell, mp, mvg_patch, cell.pol_model_args)
+    p_field_next = polarity.update_field(cell, mp, mvg_patch, cell.pol_model_kwargs)
 
     # compute motility forces at time n
     fx_motil, fy_motil = force.cyto_motility_force(cell, grad_phi, mp)
@@ -202,3 +205,10 @@ def _update_field(cell, grad_phi, force):
     v_dot_gradphi = vx_i * grad_x + vy_i * grad_y
 
     return phi_i - dt * (dF_dphi + v_dot_gradphi), dF_dphi
+
+
+def _poisson_add_time(rng, rate):
+    tau_add = rng.poisson(rate)
+    while tau_add == 0:
+        tau_add = rng.poisson(rate)
+    return tau_add
