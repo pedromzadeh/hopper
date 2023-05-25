@@ -1,18 +1,26 @@
 import numpy as np
 import yaml
 import os
+import sys
 
 from sklearn.model_selection import ParameterGrid
 
 
-def simbox_configs(L_two_state=73):
+def simbox_configs(snapshots, L_two_state=73):
+    if snapshots.lower() == "many":
+        n_simbox_view = 250
+    elif snapshots.lower() == "few":
+        n_simbox_view = 5000
+    else:
+        raise ValueError(f"{snapshots} must be either `many` or `few`.")
+
     base_config = {
-        "N": 100000,  # total simulation time
-        "dt": 0.0015,  # time step
+        "N": 240000,  # total simulation time
+        "dt": 0.0015,  # time step (~ 0.72s given 1pft = 8min)
         "N_mesh": 200,  # lattice grid size
         "L_box": 50,  # size of simulation box in real units
         "stat_collection_freq": 250,  # frequency of collecting pre-collision stats
-        "simbox_view_freq": 250,  # frequency of outputting the view of simbox
+        "simbox_view_freq": n_simbox_view,  # frequency of outputting the view of simbox
     }
     two_state = {
         "substrate": {
@@ -73,7 +81,7 @@ if __name__ == "__main__":
         "R_eq": list(map(float, R_eqs)),
     }
     grid = cell_configs(pol_type, grid_axes_kwargs)
-    mps = simbox_configs()
+    mps = simbox_configs(sys.argv[1])
 
     print(f"Writing {2*len(grid)} configuration files...")
     for k, sub_type in enumerate(["two_state", "single_state"]):
