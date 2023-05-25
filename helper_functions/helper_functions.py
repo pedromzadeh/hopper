@@ -159,9 +159,8 @@ def evolve_cell(cell, force, mp, n):
     # add MVG patch according to a Poisson process
     tau_add = _poisson_add_time(cell.rng, cell.pol_model_kwargs["add_rate"])
     if n % tau_add == 0:
-        # mag = poisson_patch_mag(cell.pol_model_kwargs["mag_rate"])
         mag = cell.rng.normal(
-            mean=cell.pol_model_kwargs["mag_mean"], std=cell.pol_model_kwargs["mag_std"]
+            loc=cell.pol_model_kwargs["mag_mean"], scale=cell.pol_model_kwargs["mag_std"]
         )
         mvg_patch = mag * polarity.mvg_patch(cell, cntr_probs)
     else:
