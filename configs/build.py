@@ -15,7 +15,7 @@ def simbox_configs(snapshots, L_two_state=73):
         raise ValueError(f"{snapshots} must be either `many` or `few`.")
 
     base_config = {
-        "N": 240000,  # total simulation time
+        "N": 120000,  # total simulation time
         "dt": 0.0015,  # time step (~ 0.72s given 1pft = 8min)
         "N_mesh": 200,  # lattice grid size
         "L_box": 50,  # size of simulation box in real units
