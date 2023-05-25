@@ -169,7 +169,7 @@ class Simulator:
         )
 
         CELL_CONFIG = os.path.join(
-            self.root_dir, f"configs/{polarity_type}/grid_id{grid_id}", "cell0.yaml"
+            self.root_dir, f"configs/{polarity_type}/grid_id{grid_id}", "cell.yaml"
         )
 
         run_root = os.path.join(
