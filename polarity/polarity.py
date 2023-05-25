@@ -256,7 +256,7 @@ def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, cntr_pt=None):
     return cell.mvg_gen.pdf(means, cov).reshape(N_mesh, N_mesh)
 
 
-def update_field(cell, mp, mvg_patch, dphi_dt, model_args):
+def update_field(cell, mp, mvg_patch, model_args):
     """
     Returns the updated polarity field.
 
@@ -270,9 +270,6 @@ def update_field(cell, mp, mvg_patch, dphi_dt, model_args):
 
     mvg_patch : np.ndarray of shape (N_mesh, N_mesh)
         A multivariate Gaussian acting as a protrusive impulse.
-
-    dphi_dt : np.ndarray of shape (N_mesh, N_mesh)
-        Instantaneous change in cell shape.
 
     model_args : dict
         Relevant model parameters -- tau, tau_x, tau_ten, tau_mvg, perim_0
