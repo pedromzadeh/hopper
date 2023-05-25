@@ -196,7 +196,7 @@ class Substrate:
         bridge_width : float, optional
             Specifies the dimension of bridge opening in microns, by default 10
         delta_centers : float, optional
-            Specifies the distance between two basin centers in microns, by default 76
+            Specifies the distance between two basin centers in microns, by default 73
 
         Returns
         -------
