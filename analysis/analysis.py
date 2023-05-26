@@ -314,7 +314,7 @@ def imshow_F_sigma(maps, bounds, title, interp="none", save_path=None):
 
     fig1.subplots_adjust(wspace=0.75)
     if save_path is not None:
-        plt.save_fig(save_path)
+        plt.savefig(save_path)
         plt.close()
     else:
         plt.show()
@@ -330,7 +330,7 @@ def _plot_trajs(F, bounds, ax):
         np.linspace(vmin + buffer, vmax - buffer, nbins),
     )
 
-    x = np.linspace(xmin, xmax, 100)
+    x = np.linspace(xmin, xmax, 5000)
     y = (vmax - vmin) / (xmax - xmin) * (x - xmin) + vmin
 
     # if initial condition exists in F, make trajectory
