@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     # grid search over...
     gammas = np.linspace(0.8, 1.8, 2)
-    mag_stds = np.linspace(5000, 40000, 2)
+    mag_stds = np.linspace(15000, 30000, 2)
     add_rates = np.linspace(3, 6, 2)
     R_eqs = np.linspace(2.5, 3.0, 2)
 
