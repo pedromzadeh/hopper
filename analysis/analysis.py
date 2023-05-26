@@ -279,7 +279,7 @@ def streamplot(
         plt.close(fig_temp)
 
 
-def imshow_F_sigma(maps, bounds, title, interp="none"):
+def imshow_F_sigma(maps, bounds, title, interp="none", save_path=None):
 
     fig1, axs = plt.subplots(1, 3, figsize=(15, 3.5), dpi=300)
     xmin, xmax, vmin, vmax, nbins = bounds
@@ -313,6 +313,11 @@ def imshow_F_sigma(maps, bounds, title, interp="none"):
     _plot_trajs(F, bounds, axs[2])
 
     fig1.subplots_adjust(wspace=0.75)
+    if save_path is not None:
+        plt.save_fig(save_path)
+        plt.close()
+    else:
+        plt.show()
 
 
 def _plot_trajs(F, bounds, ax):
