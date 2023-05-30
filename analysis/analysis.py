@@ -47,6 +47,8 @@ def calc_F_sigma(binned_df, dt, nbins, min_pts):
 
     F = np.empty(shape=(nbins, nbins))
     F[:] = np.nan
+    F_std = np.empty(shape=(nbins, nbins))
+    F_std[:] = np.nan
 
     sigma = np.empty(shape=(nbins, nbins))
     sigma[:] = np.nan
@@ -56,9 +58,10 @@ def calc_F_sigma(binned_df, dt, nbins, min_pts):
         if len(df.a) < min_pts:
             continue
         F[i, j] = df.a.mean()
+        F_std[i, j] = df.a.std() / df.a.size
         sigma[i, j] = np.sqrt(dt * np.mean((df.a.values - F[i, j]) ** 2))
 
-    return F, sigma
+    return F, F_std, sigma
 
 
 def get_bin_indices(df, nbins):
@@ -279,7 +282,7 @@ def streamplot(
         plt.close(fig_temp)
 
 
-def imshow_F_sigma(maps, bounds, title, interp="none", save_path=None):
+def imshow_F_sigma(maps, bounds, title, interp="none", err_cutoff=None, save_path=None):
 
     fig1, axs = plt.subplots(1, 3, figsize=(15, 3.5), dpi=300)
     xmin, xmax, vmin, vmax, nbins = bounds
@@ -310,6 +313,9 @@ def imshow_F_sigma(maps, bounds, title, interp="none", save_path=None):
         # ax.set_ylabel(r"$v$ ($\mu$m/hr)")
 
     # plot streamplots for F(x, v)
+    if err_cutoff is not None:
+        _mask = (sigma / F) * 100 > err_cutoff
+        F[_mask] = np.nan
     _plot_trajs(F, bounds, axs[2])
 
     fig1.subplots_adjust(wspace=0.75)
@@ -330,7 +336,7 @@ def _plot_trajs(F, bounds, ax):
         np.linspace(vmin + buffer, vmax - buffer, nbins),
     )
 
-    x = np.linspace(xmin, xmax, 5000)
+    x = np.linspace(xmin, xmax, 100)
     y = (vmax - vmin) / (xmax - xmin) * (x - xmin) + vmin
 
     # if initial condition exists in F, make trajectory
