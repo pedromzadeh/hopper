@@ -15,7 +15,7 @@ def simbox_configs(snapshots, L_two_state=73):
         raise ValueError(f"{snapshots} must be either `many` or `few`.")
 
     base_config = {
-        "N": 120000,  # total simulation time
+        "N": 480000,  # total simulation time
         "dt": 0.0015,  # time step (~ 0.72s given 1pft = 8min)
         "N_mesh": 200,  # lattice grid size
         "L_box": 50,  # size of simulation box in real units
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     # grid search over...
     gammas = np.linspace(0.8, 1.8, 2)
-    mag_stds = np.linspace(15000, 30000, 2)
+    mag_stds = np.linspace(15000, 25000, 2)
     add_rates = np.linspace(3, 6, 2)
     R_eqs = np.linspace(2.5, 3.0, 2)
 
