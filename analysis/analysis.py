@@ -282,7 +282,9 @@ def streamplot(
         plt.close(fig_temp)
 
 
-def imshow_F_sigma(maps, bounds, title, interp="none", err_cutoff=None, save_path=None):
+def imshow_F_sigma(
+    maps, bounds, stream_init_pts, title, interp="none", err_cutoff=None, save_path=None
+):
 
     fig1, axs = plt.subplots(1, 3, figsize=(15, 3.5), dpi=300)
     xmin, xmax, vmin, vmax, nbins = bounds
@@ -309,14 +311,12 @@ def imshow_F_sigma(maps, bounds, title, interp="none", err_cutoff=None, save_pat
         cbar = plt.colorbar(im, ax=ax)
         cbar.set_label(cbar_title)
         ax.set_aspect("auto")
-        # ax.set_xlabel(r"$x$ ($\mu$m)")
-        # ax.set_ylabel(r"$v$ ($\mu$m/hr)")
 
     # plot streamplots for F(x, v)
     if err_cutoff is not None:
         _mask = (sigma / F) * 100 > err_cutoff
         F[_mask] = np.nan
-    _plot_trajs(F, bounds, axs[2])
+    _plot_trajs(F, bounds, stream_init_pts, axs[2])
 
     fig1.subplots_adjust(wspace=0.75)
     if save_path is not None:
@@ -326,7 +326,7 @@ def imshow_F_sigma(maps, bounds, title, interp="none", err_cutoff=None, save_pat
         plt.show()
 
 
-def _plot_trajs(F, bounds, ax):
+def _plot_trajs(F, bounds, init_pts, ax):
     xmin, xmax, vmin, vmax, nbins = bounds
 
     # make stremplot for F(x, v)
@@ -336,11 +336,8 @@ def _plot_trajs(F, bounds, ax):
         np.linspace(vmin + buffer, vmax - buffer, nbins),
     )
 
-    x = np.linspace(xmin, xmax, 100)
-    y = (vmax - vmin) / (xmax - xmin) * (x - xmin) + vmin
-
     # if initial condition exists in F, make trajectory
-    for xx, yy in zip(x, y):
+    for xx, yy in init_pts:
         try:
             ax.streamplot(
                 X,
@@ -361,5 +358,3 @@ def _plot_trajs(F, bounds, ax):
     )
 
     ax.set_aspect("auto")
-    # ax.set_xlabel(r"$x$ ($\mu$m)")
-    # ax.set_ylabel(r"$v$ ($\mu$m/hr)")
