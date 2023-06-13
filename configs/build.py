@@ -38,7 +38,6 @@ def simbox_configs(snapshots, L_two_state=73):
 
 
 def cell_configs(pol_type, grid_axes_kwargs):
-
     # static cell parameters
     cell_kwargs = {
         "A": [0],
@@ -86,7 +85,6 @@ if __name__ == "__main__":
     print(f"Writing {2*len(grid)} configuration files...")
     for k, sub_type in enumerate(["two_state", "single_state"]):
         for id, params in enumerate(grid):
-
             if k == 1:
                 id += len(grid)
 
@@ -99,5 +97,5 @@ if __name__ == "__main__":
                 yaml.dump(mps[k], yfile)
 
             # write each cell config
-            with open(os.path.join(path, f"cell.yaml"), "w") as yfile:
+            with open(os.path.join(path, "cell.yaml"), "w") as yfile:
                 yaml.dump(params, yfile)
