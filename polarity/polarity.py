@@ -6,7 +6,7 @@ def _sigmoid(x, center, eps):
     return 1 / (1 + np.exp((-x + center) / eps))
 
 
-def _polarity_at_cntrs(cell, grad_phi, method="linear"):
+def _polarity_at_cntrs(cell, grad_phi, method="linear", delta_l=None):
     """
     Evaluates the polarity field a little below the cell boundary
     and assigns that value as the field's value at cell contour points.
@@ -24,6 +24,11 @@ def _polarity_at_cntrs(cell, grad_phi, method="linear"):
         "pixel" for pixel-based value;
         one of "linear", "nearest", "slinear", "cubic", "quintic", "pchip"
         for interpolated values.
+        By default "linear", which interpolates.
+
+    delta_l : float, optional
+        Specifies if contour points should be projected and by how much.
+        By default None, which means we take the contours as they are.
 
     Returns
     -------
@@ -36,31 +41,34 @@ def _polarity_at_cntrs(cell, grad_phi, method="linear"):
     """
 
     if method == "pixel":
-        return _pixel_value_at_cntrs(cell, grad_phi)
+        assert delta_l is not None
+        return _pixel_value_at_cntrs(cell, grad_phi, delta_l)
 
-    return _interp_value_at_cntrs(cell, grad_phi, method)
+    return _interp_value_at_cntrs(cell, grad_phi, method, delta_l)
 
 
-def _interp_value_at_cntrs(cell, grad_phi, method):
-
+def _interp_value_at_cntrs(cell, grad_phi, method, d_l):
+    p_field = np.where(cell.p_field > 0, cell.p_field, 0)
+    x = np.arange(cell.simbox.N_mesh)
+    interp = RegularGridInterpolator((x, x), p_field, method=method)
     cntr = cell.contour[0]
+
+    if d_l is None:
+        return interp(cntr)
+
     grad_phi_norm = np.sqrt(np.sum(grad_phi * grad_phi, axis=0)) + 1e-10
     n_hat = -grad_phi / grad_phi_norm
-    l = 0
     cntr = np.array(
         [
-            [y - l * n_hat[1][int(y), int(x)], x - l * n_hat[0][int(y), int(x)]]
+            [y - d_l * n_hat[1][int(y), int(x)], x - d_l * n_hat[0][int(y), int(x)]]
             for y, x in cntr
         ]
     )
 
-    p_field = np.where(cell.p_field > 0, cell.p_field, 0)
-    x = np.arange(cell.simbox.N_mesh)
-    interp = RegularGridInterpolator((x, x), p_field, method=method)
     return interp(cntr)
 
 
-def _pixel_value_at_cntrs(cell, grad_phi, l=3):
+def _pixel_value_at_cntrs(cell, grad_phi, d_l):
     cntr = cell.contour[0][:, ::-1]
     pol = np.where(cell.p_field > 0, cell.p_field, 0)
     grad_phi_norm = np.sqrt(np.sum(grad_phi * grad_phi, axis=0)) + 1e-10
@@ -70,7 +78,10 @@ def _pixel_value_at_cntrs(cell, grad_phi, l=3):
         [[n_hat[0][int(y), int(x)], n_hat[1][int(y), int(x)]] for x, y in cntr]
     )
     cntr_shifted = np.array(
-        [[x - l * nx, y - l * ny] for x, y, nx, ny in np.hstack((cntr, cntr_n_hats))]
+        [
+            [x - d_l * nx, y - d_l * ny]
+            for x, y, nx, ny in np.hstack((cntr, cntr_n_hats))
+        ]
     )
 
     return np.array([pol[int(y), int(x)] for x, y in cntr_shifted])
@@ -122,11 +133,11 @@ def dFpol_dP(cell, nu, target):
     return 2 * nu * (1 - P_tot / target) * (-1 / target)
 
 
-def cntr_probs_filopodia(cell, grad_phi, mp, l=5, norm=True):
+def cntr_probs_filopodia(cell, grad_phi, mp, delta_l, method="linear", norm=True):
     """
     Assigns probabilities to each contour point to experience a protrusive patch given
-    the micropattern. This basically projects each contour point normally outward, r + nl,
-    and asks whether the micropattern is present or not.
+    the micropattern. This basically projects each contour point normally outward,
+    r + nl, and asks whether the micropattern is present or not.
 
     Parameters
     ----------
@@ -139,35 +150,43 @@ def cntr_probs_filopodia(cell, grad_phi, mp, l=5, norm=True):
     mp : np.ndarray of shape (N_mesh, N_mesh)
         The field for the micropatntern.
 
-    l : float, optional
-        Amount by which we protrude outside the cell, in phase-field units, by default 5.
+    delta_l : float
+        Amount by which we protrude outside the cell, in phase-field units.
+
+    method : str
+        One of "linear", "nearest", "slinear", "cubic", "quintic", "pchip"
+        for interpolated values.
+        By default "linear", which interpolates.
 
     norm : bool, optional
         If True, probabilities are normalized, else not, by default True
 
+
     Returns
     -------
     np.ndarray of shape (# of contour points, )
-        PMF of each contour point to experience a protrusive patch given the micropattern.
+        PMF of each contour point to experience a protrusive patch given the
+        micropattern.
     """
-
     cntr = cell.contour[0][:, ::-1]
     grad_phi_norm = np.sqrt(np.sum(grad_phi * grad_phi, axis=0)) + 1e-10
     n_hat = -grad_phi / grad_phi_norm
-
     cntr_n_hats = np.array(
         [[n_hat[0][int(y), int(x)], n_hat[1][int(y), int(x)]] for x, y in cntr]
     )
     cntr_shifted = np.array(
-        [[x + l * nx, y + l * ny] for x, y, nx, ny in np.hstack((cntr, cntr_n_hats))]
+        [
+            [x + delta_l * nx, y + delta_l * ny]
+            for x, y, nx, ny in np.hstack((cntr, cntr_n_hats))
+        ]
     )
 
-    p = 1 - mp
-    probs = np.array([p[int(y), int(x)] for x, y in cntr_shifted])
-
+    x = np.arange(cell.simbox.N_mesh)
+    interp = RegularGridInterpolator((x, x), 1 - mp, method=method)
+    p = interp(cntr_shifted[:, ::-1])
     if norm:
-        return probs / probs.sum()
-    return probs
+        return p / p.sum(), cntr_shifted
+    return p
 
 
 def cntr_probs_feedback(cell, grad_phi, R_c=None, norm=True):
@@ -195,7 +214,8 @@ def cntr_probs_feedback(cell, grad_phi, R_c=None, norm=True):
     Returns
     -------
     np.ndarray of shape (# of contour points, )
-        PMF of each contour point to experience a protrusive patch given the micropattern.
+        PMF of each contour point to experience a protrusive patch given the
+        micropattern.
     """
     # probs due to feedback
     cntr = cell.contour[0][:, ::-1]
