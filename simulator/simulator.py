@@ -5,7 +5,6 @@ from substrate.substrates import Substrate
 from helper_functions import helper_functions as hf
 from visuals.figure import Figure
 
-import glob
 import pandas as pd
 import os
 
