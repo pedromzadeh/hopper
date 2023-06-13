@@ -147,8 +147,6 @@ def evolve_cell(cell, force, mp, n):
     grad_x, grad_y, _ = compute_gradients(cell.phi, cell.simbox.dx)
     grad_phi = np.array([grad_x, grad_y])
     eta = cell.eta
-    phi = cell.phi
-    dt = cell.simbox.dt
 
     # contour PMF to add mvg patch
     p1 = polarity.cntr_probs_filopodia(cell, grad_phi, mp)
@@ -160,7 +158,8 @@ def evolve_cell(cell, force, mp, n):
     tau_add = _poisson_add_time(cell.rng, cell.pol_model_kwargs["add_rate"])
     if n % tau_add == 0:
         mag = cell.rng.normal(
-            loc=cell.pol_model_kwargs["mag_mean"], scale=cell.pol_model_kwargs["mag_std"]
+            loc=cell.pol_model_kwargs["mag_mean"],
+            scale=cell.pol_model_kwargs["mag_std"],
         )
         mvg_patch = mag * polarity.mvg_patch(cell, cntr_probs)
     else:
@@ -168,7 +167,6 @@ def evolve_cell(cell, force, mp, n):
 
     # phi_(n+1)
     phi_i_next, dF_dphi = _update_field(cell, grad_phi, force)
-    dphi_dt = (phi_i_next - phi) / dt
 
     # polarization field (n+1)
     p_field_next = polarity.update_field(cell, mp, mvg_patch, cell.pol_model_kwargs)
@@ -191,7 +189,6 @@ def evolve_cell(cell, force, mp, n):
 
 
 def _update_field(cell, grad_phi, force):
-
     # obtain relevant variables at time n
     dt = cell.simbox.dt
     phi_i = cell.phi
