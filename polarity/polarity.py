@@ -185,7 +185,7 @@ def cntr_probs_filopodia(cell, grad_phi, mp, delta_l, method="linear", norm=True
     interp = RegularGridInterpolator((x, x), 1 - mp, method=method)
     p = interp(cntr_shifted[:, ::-1])
     if norm:
-        return p / p.sum(), cntr_shifted
+        return p / p.sum()
     return p
 
 
