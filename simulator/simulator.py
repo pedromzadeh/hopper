@@ -74,7 +74,6 @@ class Simulator:
 
         # carry out the simulation
         for n in range(simbox.sim_time):
-
             # collect statistics
             if n % simbox.n_stats == 0 and self._cell_whole(cell):
                 time = n * cell.simbox.dt * 8 / 60  # time in hr

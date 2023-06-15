@@ -10,7 +10,7 @@ def simbox_configs(snapshots, L_two_state=73):
     if snapshots.lower() == "many":
         n_simbox_view = 250
     elif snapshots.lower() == "few":
-        n_simbox_view = 5000
+        n_simbox_view = 500000
     else:
         raise ValueError(f"{snapshots} must be either `many` or `few`.")
 
