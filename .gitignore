@@ -4,7 +4,6 @@ configs/IM/
 output/
 _server/_outfiles
 _server/sim_data/
-_notebooks/ 
 analysis/
 
 # Byte-compiled / optimized / DLL files
