@@ -254,7 +254,8 @@ def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, cntr_pt=None):
         Off-diagonal element of the covariance matrix, by default 0
 
     cntr_pt : list or np.ndarray of shape (2, ), optional
-        Specific contour point about which an mvg patch is created, by default None
+        Specific contour point (x, y) about which an mvg patch is created,
+        by default None
 
     Returns
     -------
@@ -263,6 +264,9 @@ def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, cntr_pt=None):
     """
 
     def _pick_c():
+        """
+        Returns a contour point, format (x, y).
+        """
         if cntr_pt is not None:
             return cntr_pt
 
@@ -270,10 +274,9 @@ def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, cntr_pt=None):
         return cntr[cell.rng.choice(range(len(cntr)), p=cntr_probs)]
 
     c = _pick_c()
-    means = np.array(c)
     cov = np.array([[cov_ii, cov_ij], [cov_ij, cov_ii]])
     N_mesh = cell.simbox.N_mesh
-    return cell.mvg_gen.pdf(means, cov).reshape(N_mesh, N_mesh)
+    return cell.mvg_gen.pdf(c, cov).reshape(N_mesh, N_mesh), c
 
 
 def update_field(cell, mp, mvg_patch, model_args):

@@ -6,6 +6,7 @@ from helper_functions import helper_functions as hf
 from visuals.figure import Figure
 
 import pandas as pd
+import numpy as np
 import os
 
 
@@ -68,6 +69,7 @@ class Simulator:
 
         # collect cell positions
         cms = pd.DataFrame()
+        asym = pd.DataFrame()
 
         # init MVG generator for the cell
         self._mvg_generator(cell)
@@ -97,7 +99,19 @@ class Simulator:
                 )
 
             # update cell to the next time step
-            hf.evolve_cell(cell, force_calculator, chi, n)
+            c, mag = hf.evolve_cell(cell, force_calculator, chi, n)
+            c = np.asarray(c) * cell.simbox.dx
+            cntr = cell.contour[0][:, ::-1] * cell.simbox.dx
+            left_ratio = np.sum(cntr[:, 0] < cell.cm[1][0]) / cntr.shape[0]
+            asym = pd.concat(
+                [
+                    asym,
+                    pd.DataFrame(
+                        [[*cell.cm[1], c[0], c[1], mag, left_ratio]],
+                        columns=["x", "y", "cs_x", "cs_y", "mag", "left_ratio"],
+                    ),
+                ],
+            )
 
             # if cell has escaped, end simulation
             if not self._cell_inside(cell, chi):
@@ -109,6 +123,8 @@ class Simulator:
         cms["mag_std"] = cell.pol_model_kwargs["mag_std"]
         cms["add_rate"] = cell.pol_model_kwargs["add_rate"]
         cms.to_csv(paths["result"])
+
+        asym.to_csv(f"../output/IM/grid_id{grid_id}/run_{run_id}/asym.csv")
 
     def _build_system(self, simbox, cell_config, cell_rng_seed):
         """
