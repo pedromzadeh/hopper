@@ -31,7 +31,12 @@ def simbox_configs(snapshots, L_two_state=73):
         }
     }
     single_state = {
-        "substrate": {"xi": 0.2, "kind": "rectangular", "buffer": 0, "sub_sep": 0}
+        "substrate": {
+            "xi": 0.2,
+            "kind": "rectangular",
+            "buffer": 0,
+            "sub_sep": L_two_state,
+        }
     }
 
     return (base_config | two_state, base_config | single_state)

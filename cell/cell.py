@@ -168,12 +168,23 @@ class Cell:
         return 1 / 2 + 1 / 2 * np.tanh(-(r - R) / epsilon)
 
     def _init_center(self):
-        d = self.simbox.sub_config["sub_sep"] / (2 * 6)
-        x1 = self.simbox.L_box / 2 - d
-        x2 = self.simbox.L_box / 2 + d
+        def _two_state_init(d):
+            x1 = self.simbox.L_box / 2 - d
+            x2 = self.simbox.L_box / 2 + d
+            centers = [[x1, 25], [x2, 25]]
+            return centers[self.rng.randint(0, 2)]
 
-        centers = [[x1, 25], [x2, 25]]
-        return centers[self.rng.randint(0, 2)]
+        def _rectangular_init(d):
+            x1 = self.simbox.L_box / 2 - d
+            x2 = self.simbox.L_box / 2 + d
+            return [self.rng.uniform(x1, x2), 25]
+
+        d = self.simbox.sub_config["sub_sep"] / (2 * 6)
+        kind = self.simbox.sub_config["kind"]
+        if kind == "two-state":
+            return _two_state_init(d)
+        else:
+            return _rectangular_init(d)
 
     def _load_parameters(self, path):
         def _polarity_params(config):
