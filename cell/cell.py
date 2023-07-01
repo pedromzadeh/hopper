@@ -141,7 +141,7 @@ class Cell:
         # spatial features of the cell
         self.phi = self._create()
         self.W = None
-        self.contour = hf.find_contour(self.phi)
+        self.contour = hf.find_contour(self.phi, interpolate=self._cntr_interp)
         self.cm = np.array([self.center, self.center])
         self.p_field = self.rng.uniform(0, 1, size=self.phi.shape) * self.phi
 
@@ -200,6 +200,7 @@ class Cell:
         with open(path, "r") as file:
             config = yaml.safe_load(file)
 
+        self._cntr_interp = config["_cntr_interp"]
         self.id = config["id"]
         self.R_eq = config["R_eq"]
         self.R_init = config["R_init"]

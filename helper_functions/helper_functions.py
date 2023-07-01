@@ -3,7 +3,7 @@ from skimage import measure
 import numpy as np
 
 
-def find_contour(field, level=0.5):
+def find_contour(field, level=0.5, interpolate=False, n_pts=50):
     """
     Computes the contour at the specified level.
 
@@ -21,7 +21,23 @@ def find_contour(field, level=0.5):
         m is the number of points, and the ordering is (y, x). More than one
         element in the list suggests disjointed sets of contour points.
     """
-    return measure.find_contours(field, level=level)
+    yx_cntr = measure.find_contours(field, level=level)
+
+    if interpolate:
+        from shapely import LineString
+
+        sets = []
+        for cntr in yx_cntr:
+            xy_cntr = cntr[:, ::-1]
+            line = LineString(xy_cntr)
+            dl = line.length / n_pts
+            pts = [line.interpolate(dl * i) for i in range(n_pts)]
+            pts = np.array([[pt.y, pt.x] for pt in pts])
+            # pts = np.unique(pts, axis=0)
+            sets.append(pts)
+        yx_cntr = sets
+
+    return yx_cntr
 
 
 def compute_CM(cell):
@@ -185,7 +201,7 @@ def evolve_cell(cell, force, mp, n):
     # UPDATE class variables now
     cell.phi = phi_i_next
     cell.p_field = p_field_next
-    cell.contour = find_contour(cell.phi)
+    cell.contour = find_contour(cell.phi, interpolate=cell._cntr_interp)
     cell.cm = compute_CM(cell)
     cell.v_cm = compute_v_CM(cell)
     cell.vx = (fx_thermo + fx_motil) / eta
