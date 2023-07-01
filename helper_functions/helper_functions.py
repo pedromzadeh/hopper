@@ -167,7 +167,12 @@ def evolve_cell(cell, force, mp, n):
     # contour PMF to add mvg patch
     p1 = polarity.cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
     p2 = polarity.cntr_probs_feedback(cell, grad_phi)
-    cntr_probs = p1 * p2
+    if cell._prob_type == "p1":
+        cntr_probs = p1
+    elif cell._prob_type == "p2":
+        cntr_probs = p2
+    else:
+        cntr_probs = p1 * p2
     cntr_probs /= cntr_probs.sum()
 
     # add MVG patch according to a Poisson process

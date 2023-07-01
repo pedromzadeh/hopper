@@ -201,6 +201,7 @@ class Cell:
             config = yaml.safe_load(file)
 
         self._cntr_interp = config["_cntr_interp"]
+        self._prob_type = config["_prob"]
         self.id = config["id"]
         self.R_eq = config["R_eq"]
         self.R_init = config["R_init"]
