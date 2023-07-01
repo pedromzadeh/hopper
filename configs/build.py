@@ -55,7 +55,7 @@ def cell_configs(pol_type, grid_axes_kwargs):
         "alpha": [50],
         "id": [0],
         "polarity_mode": [str(pol_type).upper()],
-        "_cntr_interp": False,
+        "_cntr_interp": [False],
     }
 
     # static polarity model params
