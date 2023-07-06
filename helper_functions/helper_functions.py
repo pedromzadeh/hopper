@@ -172,7 +172,9 @@ def evolve_cell(cell, force, mp, n):
     else:
         # contour PMF to add mvg patch
         p1 = polarity.cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
-        p2 = polarity.cntr_probs_feedback(cell, grad_phi)
+        p2 = polarity.cntr_probs_feedback(
+            cell, grad_phi, delta_l=cell.pol_model_kwargs["_go_in"]
+        )
 
         if cell._prob_type == "p1":
             cntr_probs = p1

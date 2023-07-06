@@ -56,7 +56,7 @@ def cell_configs(pol_type, grid_axes_kwargs):
         "id": [0],
         "polarity_mode": [str(pol_type).upper()],
         "_cntr_interp": [False],
-        "_prob": ["none"],
+        "_prob": ["p1+p2"],
     }
 
     # static polarity model params
@@ -65,7 +65,8 @@ def cell_configs(pol_type, grid_axes_kwargs):
         "tau": [0.5],
         "tau_x": [0.02],
         "tau_ten": [1.0],
-        "_pixel_noise": [True],
+        "_pixel_noise": [False],
+        "_go_in": [2],
     }
 
     return list(ParameterGrid(grid_axes_kwargs | cell_kwargs | pol_model_kwargs))
@@ -97,7 +98,7 @@ if __name__ == "__main__":
         if k == 1:
             id += len(grid)
 
-        path = os.path.join(root, f"grid_id{id + 64}")
+        path = os.path.join(root, f"grid_id{id + 80}")
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
 

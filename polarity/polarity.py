@@ -189,7 +189,7 @@ def cntr_probs_filopodia(cell, grad_phi, mp, delta_l, method="linear", norm=True
     return p
 
 
-def cntr_probs_feedback(cell, grad_phi, R_c=None, norm=True):
+def cntr_probs_feedback(cell, grad_phi, delta_l=None, R_c=None, norm=True):
     """
     Assigns probabilities to each contour point to experience a protrusive patch given
     the positive feedback at already highly protrusive sites. Bascially, sites that are
@@ -220,7 +220,7 @@ def cntr_probs_feedback(cell, grad_phi, R_c=None, norm=True):
     # probs due to feedback
     cntr = cell.contour[0][:, ::-1]
     in_frame_cntr = cntr * cell.simbox.dx - cell.cm[1]
-    p_at_cntr = _polarity_at_cntrs(cell, grad_phi)
+    p_at_cntr = _polarity_at_cntrs(cell, grad_phi, delta_l=delta_l)
     radii = np.linalg.norm(in_frame_cntr, axis=1)
 
     if R_c is not None:
