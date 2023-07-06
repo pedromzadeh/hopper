@@ -56,7 +56,7 @@ def cell_configs(pol_type, grid_axes_kwargs):
         "id": [0],
         "polarity_mode": [str(pol_type).upper()],
         "_cntr_interp": [False],
-        "_prob": ["p1+p2"],
+        "_prob": ["none"],
     }
 
     # static polarity model params
@@ -65,6 +65,7 @@ def cell_configs(pol_type, grid_axes_kwargs):
         "tau": [0.5],
         "tau_x": [0.02],
         "tau_ten": [1.0],
+        "_pixel_noise": [True],
     }
 
     return list(ParameterGrid(grid_axes_kwargs | cell_kwargs | pol_model_kwargs))
@@ -90,19 +91,20 @@ if __name__ == "__main__":
     mps = simbox_configs(sys.argv[1])
 
     print(f"Writing {2*len(grid)} configuration files...")
-    for k, sub_type in enumerate(["two_state", "single_state"]):
-        for id, params in enumerate(grid):
-            if k == 1:
-                id += len(grid)
+    # for k, sub_type in enumerate(["two_state", "single_state"]):
+    k = 1
+    for id, params in enumerate(grid):
+        if k == 1:
+            id += len(grid)
 
-            path = os.path.join(root, f"grid_id{id}")
-            if not os.path.exists(path):
-                os.makedirs(path, exist_ok=True)
+        path = os.path.join(root, f"grid_id{id + 64}")
+        if not os.path.exists(path):
+            os.makedirs(path, exist_ok=True)
 
-            # write simbox config
-            with open(os.path.join(path, "simbox.yaml"), "w") as yfile:
-                yaml.dump(mps[k], yfile)
+        # write simbox config
+        with open(os.path.join(path, "simbox.yaml"), "w") as yfile:
+            yaml.dump(mps[k], yfile)
 
-            # write each cell config
-            with open(os.path.join(path, "cell.yaml"), "w") as yfile:
-                yaml.dump(params, yfile)
+        # write each cell config
+        with open(os.path.join(path, "cell.yaml"), "w") as yfile:
+            yaml.dump(params, yfile)

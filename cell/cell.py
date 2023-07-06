@@ -195,6 +195,7 @@ class Cell:
                 "tau": config["tau"],
                 "tau_x": config["tau_x"],
                 "tau_ten": config["tau_ten"],
+                "_pixel_noise": config["_pixel_noise"],
             }
 
         with open(path, "r") as file:

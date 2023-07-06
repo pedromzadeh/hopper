@@ -164,37 +164,43 @@ def evolve_cell(cell, force, mp, n):
     grad_phi = np.array([grad_x, grad_y])
     eta = cell.eta
 
-    # contour PMF to add mvg patch
-    p1 = polarity.cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
-    p2 = polarity.cntr_probs_feedback(cell, grad_phi)
-    if cell._prob_type == "p1":
-        cntr_probs = p1
-    elif cell._prob_type == "p2":
-        cntr_probs = p2
-    else:
-        cntr_probs = p1 * p2
-    cntr_probs /= cntr_probs.sum()
-
-    # add MVG patch according to a Poisson process
-    tau_add = _poisson_add_time(cell.rng, cell.pol_model_kwargs["add_rate"])
-    picked_c = [-1, -1]
-    mag = 0
-    if n % tau_add == 0:
-        mag = cell.rng.normal(
-            loc=cell.pol_model_kwargs["mag_mean"],
-            scale=cell.pol_model_kwargs["mag_std"],
-        )
-        mvg_patch, picked_c = polarity.mvg_patch(cell, cntr_probs)
-        mvg_patch *= mag
+    if cell.pol_model_kwargs["_pixel_noise"]:
+        p_field_next = cell.p_field + polarity.pixel_random_noise(cell, D=0.15)
 
     else:
+        # contour PMF to add mvg patch
+        p1 = polarity.cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
+        p2 = polarity.cntr_probs_feedback(cell, grad_phi)
+
+        if cell._prob_type == "p1":
+            cntr_probs = p1
+        elif cell._prob_type == "p2":
+            cntr_probs = p2
+        elif cell._prob_type == "none":
+            cntr_probs = None
+        else:
+            cntr_probs = p1 * p2
+            cntr_probs /= cntr_probs.sum()
+
+        # add MVG patch according to a Poisson process
+        tau_add = _poisson_add_time(cell.rng, cell.pol_model_kwargs["add_rate"])
+        picked_c = [-1, -1]
+        mag = 0
         mvg_patch = 0
+
+        if n % tau_add == 0:
+            mag = cell.rng.normal(
+                loc=cell.pol_model_kwargs["mag_mean"],
+                scale=cell.pol_model_kwargs["mag_std"],
+            )
+            mvg_patch, picked_c = polarity.mvg_patch(cell, cntr_probs)
+            mvg_patch *= mag
+
+        # polarization field (n+1)
+        p_field_next = polarity.update_field(cell, mp, mvg_patch, cell.pol_model_kwargs)
 
     # phi_(n+1)
     phi_i_next, dF_dphi = _update_field(cell, grad_phi, force)
-
-    # polarization field (n+1)
-    p_field_next = polarity.update_field(cell, mp, mvg_patch, cell.pol_model_kwargs)
 
     # compute motility forces at time n
     fx_motil, fy_motil = force.cyto_motility_force(cell, grad_phi, mp)

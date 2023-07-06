@@ -279,6 +279,15 @@ def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, cntr_pt=None):
     return cell.mvg_gen.pdf(c, cov).reshape(N_mesh, N_mesh), c
 
 
+def pixel_random_noise(cell, D):
+    dt = cell.simbox.dt
+    dx = cell.simbox.dx
+    phi = cell.phi
+
+    noise = np.sqrt(4 * D**2 * dt / dx**2) * cell.rng.randn(*phi.shape)
+    return noise * phi
+
+
 def update_field(cell, mp, mvg_patch, model_args):
     """
     Returns the updated polarity field.
