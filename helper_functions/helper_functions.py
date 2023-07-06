@@ -163,6 +163,8 @@ def evolve_cell(cell, force, mp, n):
     grad_x, grad_y, _ = compute_gradients(cell.phi, cell.simbox.dx)
     grad_phi = np.array([grad_x, grad_y])
     eta = cell.eta
+    picked_c = [-1, -1]
+    mag = 0
 
     if cell.pol_model_kwargs["_pixel_noise"]:
         p_field_next = cell.p_field + polarity.pixel_random_noise(cell, D=0.15)
@@ -184,8 +186,6 @@ def evolve_cell(cell, force, mp, n):
 
         # add MVG patch according to a Poisson process
         tau_add = _poisson_add_time(cell.rng, cell.pol_model_kwargs["add_rate"])
-        picked_c = [-1, -1]
-        mag = 0
         mvg_patch = 0
 
         if n % tau_add == 0:
