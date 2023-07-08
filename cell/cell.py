@@ -130,15 +130,20 @@ class Cell:
         seed : int
             Seeds the local RandomState generator.
         """
-
-        # random number generator local to this instance of Cell
-        self.rng = np.random.RandomState(seed=seed)
-
         # read cell hyperparameters from file
         self.simbox = _sim_box_obj
         self._load_parameters(config_file)
 
+        # random number generator local to this instance of Cell
+        if self._rng_type == "RandomState":
+            self.rng = np.random.RandomState(seed=seed)
+        elif self._rng_type == "default":
+            self.rng = np.random.default_rng(seed=seed)
+        else:
+            raise ValueError("Random Generator type not understood.")
+
         # spatial features of the cell
+        self.center = self._init_center()
         self.phi = self._create()
         self.W = None
         self.contour = hf.find_contour(self.phi, interpolate=self._cntr_interp)
@@ -202,12 +207,12 @@ class Cell:
         with open(path, "r") as file:
             config = yaml.safe_load(file)
 
+        self._rng_type = config["_rng_type"]
         self._cntr_interp = config["_cntr_interp"]
         self._prob_type = config["_prob"]
         self.id = config["id"]
         self.R_eq = config["R_eq"]
         self.R_init = config["R_init"]
-        self.center = self._init_center()
         self.gamma = config["gamma"]
         self.A = config["A"]
         self.g = config["g"]

@@ -9,7 +9,6 @@ class Figure:
 
     @classmethod
     def view_simbox(cls, cell, chi, path):
-
         L = cell.simbox.L_box
         plt.imshow(
             cell.phi, cmap="Greys", origin="lower", extent=[0, L, 0, L], alpha=0.5
@@ -66,7 +65,6 @@ class Figure:
 
     @classmethod
     def view_pol_field(cls, cell, chi, dpi, path=None):
-
         phi = cell.phi
         p_field = cell.p_field
         L_box = cell.simbox.L_box
