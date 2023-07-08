@@ -167,7 +167,7 @@ def evolve_cell(cell, force, mp, n):
     mag = 0
 
     if cell.pol_model_kwargs["_pixel_noise"]:
-        p_field_next = cell.p_field + polarity.pixel_random_noise(cell, D=0.15)
+        p_field_next = cell.p_field + polarity.pixel_random_noise(cell, D=0.05)
 
     else:
         # contour PMF to add mvg patch

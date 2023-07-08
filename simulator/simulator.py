@@ -122,6 +122,7 @@ class Simulator:
         cms["R_eq"] = cell.R_eq
         cms["mag_std"] = cell.pol_model_kwargs["mag_std"]
         cms["add_rate"] = cell.pol_model_kwargs["add_rate"]
+        cms["seed"] = seed
         cms.to_csv(paths["result"])
 
         asym.to_csv(f"../output/IM/grid_id{grid_id}/run_{run_id}/asym.csv")
