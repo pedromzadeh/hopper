@@ -135,18 +135,16 @@ class Cell:
         self._load_parameters(config_file)
 
         # random number generator local to this instance of Cell
-        if self._rng_type == "RandomState":
-            self.rng = np.random.RandomState(seed=seed)
-        elif self._rng_type == "default":
-            self.rng = np.random.default_rng(seed=seed)
-        else:
-            raise ValueError("Random Generator type not understood.")
+        self.rng = np.random.default_rng(seed=seed)
 
         # spatial features of the cell
-        self.center = self._init_center()
-        self.phi = self._create()
-        self.W = None
-        self.contour = hf.find_contour(self.phi, interpolate=self._cntr_interp)
+        self._init_center()
+        self._init_phase_field()
+        self._init_mvg_generator()
+
+        self.contour = hf.find_contour(
+            self.phi, interpolate=self.pol_model_kwargs["interpolate_cntrs"]
+        )
         self.cm = np.array([self.center, self.center])
         self.p_field = self.rng.uniform(0, 1, size=self.phi.shape) * self.phi
 
@@ -155,19 +153,19 @@ class Cell:
         self.vy = np.zeros((_sim_box_obj.N_mesh, _sim_box_obj.N_mesh))
         self.v_cm = np.array([0, 0])
 
-    def _create(self):
+    def _init_phase_field(self):
         """
         Computes the cell's phase-field from intial values and sets self.phi.
         """
         N_mesh, dx = self.simbox.N_mesh, self.simbox.dx
-        phi = np.zeros((N_mesh, N_mesh))
+        _phi = np.zeros((N_mesh, N_mesh))
         center, R = self.center, self.R_init
         epsilon = self.lam
-        one_dim = np.arange(0, N_mesh, 1)
+        one_dim = np.arange(N_mesh)
         x, y = np.meshgrid(one_dim, one_dim)
         r = np.sqrt((center[1] - y * dx) ** 2 + (center[0] - x * dx) ** 2)
-        phi[y, x] = self._tanh(r, R, epsilon)
-        return phi
+        _phi[y, x] = self._tanh(r, R, epsilon)
+        self.phi = _phi
 
     def _tanh(self, r, R, epsilon):
         return 1 / 2 + 1 / 2 * np.tanh(-(r - R) / epsilon)
@@ -177,19 +175,28 @@ class Cell:
             x1 = self.simbox.L_box / 2 - d
             x2 = self.simbox.L_box / 2 + d
             centers = [[x1, 25], [x2, 25]]
-            return centers[self.rng.randint(0, 2)]
+            return centers[self.rng.integers(0, 2)]
 
         def _rectangular_init(d):
             x1 = self.simbox.L_box / 2 - d
             x2 = self.simbox.L_box / 2 + d
             return [self.rng.uniform(x1, x2), 25]
 
+        # config is in microns -->
+        # / 6 for PF units; / 2 for symmetry
         d = self.simbox.sub_config["sub_sep"] / (2 * 6)
         kind = self.simbox.sub_config["kind"]
-        if kind == "two-state":
-            return _two_state_init(d)
-        else:
-            return _rectangular_init(d)
+        self.center = (
+            _two_state_init(d) if kind == "two-state" else _rectangular_init(d)
+        )
+
+    def _init_mvg_generator(self):
+        from polarity.mvgaussian import MVGaussian
+
+        d = np.arange(self.simbox.N_mesh)
+        x, y = np.meshgrid(d, d)
+        X = np.array(list(zip(x.flatten(), y.flatten())))
+        self.mvg_gen = MVGaussian(X)
 
     def _load_parameters(self, path):
         def _polarity_params(config):
@@ -200,22 +207,16 @@ class Cell:
                 "tau": config["tau"],
                 "tau_x": config["tau_x"],
                 "tau_ten": config["tau_ten"],
-                "_pixel_noise": config["_pixel_noise"],
-                "_go_in": config["_go_in"],
+                "interpolate_cntrs": config["interpolate_cntrs"],
             }
 
         with open(path, "r") as file:
             config = yaml.safe_load(file)
 
-        self._rng_type = config["_rng_type"]
-        self._cntr_interp = config["_cntr_interp"]
-        self._prob_type = config["_prob"]
         self.id = config["id"]
         self.R_eq = config["R_eq"]
         self.R_init = config["R_init"]
         self.gamma = config["gamma"]
-        self.A = config["A"]
-        self.g = config["g"]
         self.nu = config["nu"]
         self.alpha = config["alpha"]
         self.lam = config["lam"]

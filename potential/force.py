@@ -59,23 +59,6 @@ class Force:
         A_target = np.pi * cell.R_eq**2
         return 2 * self.mu * (1 - A / A_target) * (-2 / A_target) * cell.phi
 
-    def substrate_int_func_deriv(self, cell):
-        """
-        Computes the functional derivative of the cell-substrate interaction
-        energy w.r.t field phi.
-
-        Parameters
-        ----------
-        cell : Cell object
-            The cell in question.
-
-        Returns
-        -------
-        ndarray of shape (N_mesh, N_mesh)
-            The force per length due to substrate interaction energy.
-        """
-        return 4 * cell.phi * (cell.phi - 2) * (cell.phi - 1) * cell.W
-
     def total_func_deriv(self, cell):
         """
         Computes the total functional derivative of the cell w.r.t field phi.
@@ -90,11 +73,7 @@ class Force:
         ndarray of shape (phi.shape[0], phi.shape[0])
             dF/dphi.
         """
-        dFch_dphi = self.cahn_hilliard_func_deriv(cell)
-        dFarea_dphi = self.area_func_deriv(cell)
-        dFchi_dphi = self.substrate_int_func_deriv(cell)
-
-        return dFch_dphi + dFarea_dphi + dFchi_dphi
+        return self.cahn_hilliard_func_deriv(cell) + self.area_func_deriv(cell)
 
     def cyto_motility_force(self, cell, grad_phi, mp):
         """

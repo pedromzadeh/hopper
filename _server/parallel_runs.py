@@ -11,7 +11,7 @@ simulator = Simulator()
 n_workers = 48
 
 # run a total of (n_batches * n_workers) simulations
-n_batches = 2
+n_batches = 10
 for batch_id in range(n_batches):
     processes = [
         multiprocessing.Process(

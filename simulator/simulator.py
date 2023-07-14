@@ -6,7 +6,6 @@ from helper_functions import helper_functions as hf
 from visuals.figure import Figure
 
 import pandas as pd
-import numpy as np
 import os
 
 
@@ -69,10 +68,6 @@ class Simulator:
 
         # collect cell positions
         cms = pd.DataFrame()
-        asym = pd.DataFrame()
-
-        # init MVG generator for the cell
-        self._mvg_generator(cell)
 
         # carry out the simulation
         for n in range(simbox.sim_time):
@@ -99,19 +94,7 @@ class Simulator:
                 )
 
             # update cell to the next time step
-            c, mag = hf.evolve_cell(cell, force_calculator, chi, n)
-            c = np.asarray(c) * cell.simbox.dx
-            cntr = cell.contour[0][:, ::-1] * cell.simbox.dx
-            left_ratio = np.sum(cntr[:, 0] < cell.cm[1][0]) / cntr.shape[0]
-            asym = pd.concat(
-                [
-                    asym,
-                    pd.DataFrame(
-                        [[*cell.cm[1], c[0], c[1], mag, left_ratio]],
-                        columns=["x", "y", "cs_x", "cs_y", "mag", "left_ratio"],
-                    ),
-                ],
-            )
+            hf.evolve_cell(cell, force_calculator, chi, n)
 
             # if cell has escaped, end simulation
             if not self._cell_inside(cell, chi):
@@ -124,8 +107,6 @@ class Simulator:
         cms["add_rate"] = cell.pol_model_kwargs["add_rate"]
         cms["seed"] = seed
         cms.to_csv(paths["result"])
-
-        asym.to_csv(f"../output/IM/grid_id{grid_id}/run_{run_id}/asym.csv")
 
     def _build_system(self, simbox, cell_config, cell_rng_seed):
         """
@@ -160,7 +141,6 @@ class Simulator:
         sub_config = simbox.sub_config
         xi = sub_config["xi"]
         kind = sub_config["kind"]
-        # buffer = sub_config["buffer"]
         sub = Substrate(N_mesh, L_box, xi)
         if kind == "two-state":
             chi = sub.two_state_sub(bridge_width=17)
@@ -170,9 +150,7 @@ class Simulator:
             raise ValueError(f"{kind} for substrate is not understood.")
 
         # initialize cells
-        # set the cumulative substrate they will interact with
         cell = Cell(cell_config, simbox, cell_rng_seed)
-        cell.W = 0.5 * cell.g * chi
 
         return cell, chi
 
@@ -219,14 +197,3 @@ class Simulator:
 
     def _cell_whole(self, cell):
         return len(cell.contour) == 1
-
-    def _mvg_generator(self, cell):
-        import numpy as np
-        from polarity.mvgaussian import MVGaussian
-
-        N_mesh = cell.simbox.N_mesh
-        d = np.linspace(0, N_mesh, N_mesh)
-        x, y = np.meshgrid(d, d)
-        X = np.array(list(zip(x.flatten(), y.flatten())))
-
-        cell.mvg_gen = MVGaussian(X)

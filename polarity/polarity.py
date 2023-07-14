@@ -2,60 +2,20 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
 
-def _sigmoid(x, center, eps):
-    return 1 / (1 + np.exp((-x + center) / eps))
-
-
-def _polarity_at_cntrs(cell, grad_phi, method="linear", delta_l=None):
-    """
-    Evaluates the polarity field a little below the cell boundary
-    and assigns that value as the field's value at cell contour points.
-    This can either be interpolated or the pixel value of the field.
-
-    Parameters
-    ----------
-    cell : Cell object
-        Cell whose polarization field we're interested in.
-
-    grad_phi : np.ndarray of shape (2, N_mesh, N_mesh)
-        Gradient of the phase-field, with grad_x, grad_y, respectively.
-
-    method : str
-        "pixel" for pixel-based value;
-        one of "linear", "nearest", "slinear", "cubic", "quintic", "pchip"
-        for interpolated values.
-        By default "linear", which interpolates.
-
-    delta_l : float, optional
-        Specifies if contour points should be projected and by how much.
-        By default None, which means we take the contours as they are.
-
-    Returns
-    -------
-    np.ndarray of shape (# of contour points, )
-        The polarization field evaluated at each contour point.
-
-    Note
-    ----
-        Negative polarity field values are set to 0.
-    """
-
-    if method == "pixel":
-        assert delta_l is not None
-        return _pixel_value_at_cntrs(cell, grad_phi, delta_l)
-
-    return _interp_value_at_cntrs(cell, grad_phi, method, delta_l)
-
-
-def _interp_value_at_cntrs(cell, grad_phi, method, d_l):
+def polarity_at_cntr(cell, method="linear"):
     p_field = np.where(cell.p_field > 0, cell.p_field, 0)
     x = np.arange(cell.simbox.N_mesh)
     interp = RegularGridInterpolator((x, x), p_field, method=method)
     cntr = cell.contour[0]
+    return interp(cntr)
 
-    if d_l is None:
-        return interp(cntr)
 
+def polarity_at_shifted_cntr(cell, grad_phi, d_l, method="linear"):
+    p_field = np.where(cell.p_field > 0, cell.p_field, 0)
+    x = np.arange(cell.simbox.N_mesh)
+    interp = RegularGridInterpolator((x, x), p_field, method=method)
+
+    cntr = cell.contour[0]
     grad_phi_norm = np.sqrt(np.sum(grad_phi * grad_phi, axis=0)) + 1e-10
     n_hat = -grad_phi / grad_phi_norm
     cntr = np.array(
@@ -64,27 +24,7 @@ def _interp_value_at_cntrs(cell, grad_phi, method, d_l):
             for y, x in cntr
         ]
     )
-
     return interp(cntr)
-
-
-def _pixel_value_at_cntrs(cell, grad_phi, d_l):
-    cntr = cell.contour[0][:, ::-1]
-    pol = np.where(cell.p_field > 0, cell.p_field, 0)
-    grad_phi_norm = np.sqrt(np.sum(grad_phi * grad_phi, axis=0)) + 1e-10
-    n_hat = -grad_phi / grad_phi_norm
-
-    cntr_n_hats = np.array(
-        [[n_hat[0][int(y), int(x)], n_hat[1][int(y), int(x)]] for x, y in cntr]
-    )
-    cntr_shifted = np.array(
-        [
-            [x - d_l * nx, y - d_l * ny]
-            for x, y, nx, ny in np.hstack((cntr, cntr_n_hats))
-        ]
-    )
-
-    return np.array([pol[int(y), int(x)] for x, y in cntr_shifted])
 
 
 def shape_induced_stress(cell, perim_0):
@@ -189,7 +129,7 @@ def cntr_probs_filopodia(cell, grad_phi, mp, delta_l, method="linear", norm=True
     return p
 
 
-def cntr_probs_feedback(cell, grad_phi, delta_l=None, R_c=None, norm=True):
+def cntr_probs_feedback(cell, norm=True, grad_phi=None, delta_l=None):
     """
     Assigns probabilities to each contour point to experience a protrusive patch given
     the positive feedback at already highly protrusive sites. Bascially, sites that are
@@ -220,12 +160,8 @@ def cntr_probs_feedback(cell, grad_phi, delta_l=None, R_c=None, norm=True):
     # probs due to feedback
     cntr = cell.contour[0][:, ::-1]
     in_frame_cntr = cntr * cell.simbox.dx - cell.cm[1]
-    p_at_cntr = _polarity_at_cntrs(cell, grad_phi, delta_l=delta_l)
+    p_at_cntr = polarity_at_cntr(cell)
     radii = np.linalg.norm(in_frame_cntr, axis=1)
-
-    if R_c is not None:
-        radii = _sigmoid(radii, R_c, eps=0.1)
-
     p = p_at_cntr * radii + 1e-5
 
     if norm and p.sum() > 0:
@@ -233,7 +169,7 @@ def cntr_probs_feedback(cell, grad_phi, delta_l=None, R_c=None, norm=True):
     return p
 
 
-def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, cntr_pt=None):
+def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, cntr_pt=None, return_c=False):
     """
     Returns a multivariate Gaussian (mvg) centered at a contour point, which is
     either passed as input or drawn from the input probability mass distribution.
@@ -276,7 +212,10 @@ def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, cntr_pt=None):
     c = _pick_c()
     cov = np.array([[cov_ii, cov_ij], [cov_ij, cov_ii]])
     N_mesh = cell.simbox.N_mesh
-    return cell.mvg_gen.pdf(c, cov).reshape(N_mesh, N_mesh), c
+
+    if return_c:
+        return cell.mvg_gen.pdf(c, cov).reshape(N_mesh, N_mesh), c
+    return cell.mvg_gen.pdf(c, cov).reshape(N_mesh, N_mesh)
 
 
 def pixel_random_noise(cell, D):
@@ -288,7 +227,7 @@ def pixel_random_noise(cell, D):
     return noise * phi
 
 
-def update_field(cell, mp, mvg_patch, model_args):
+def update_field(cell, grad_phi, mp, n):
     """
     Returns the updated polarity field.
 
@@ -316,17 +255,46 @@ def update_field(cell, mp, mvg_patch, model_args):
     p_field = cell.p_field
     phi = cell.phi
     dt = cell.simbox.dt
-    tau = model_args["tau"]
-    tau_x = model_args["tau_x"]
-    tau_ten = model_args["tau_ten"]
+    R_ten = 1.5 * cell.R_eq
 
-    # membrane tension
-    target_perimeter = 2 * np.pi * 4.5
+    tau = cell.pol_model_kwargs["tau"]
+    tau_x = cell.pol_model_kwargs["tau_x"]
+    tau_ten = cell.pol_model_kwargs["tau_ten"]
+    tau_add = cell.pol_model_kwargs["add_rate"]
+    mag_mean = (cell.pol_model_kwargs["mag_mean"],)
+    mag_std = (cell.pol_model_kwargs["mag_std"],)
+
+    # PMF for contours to see MVG hit
+    p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
+    p2 = cntr_probs_feedback(cell)
+    cntr_probs = p1 * p2
+    cntr_probs /= cntr_probs.sum()
+
+    # add MVG patch according to a Poisson process
+    patch = 0
+    if n % _poisson_add_time(cell.rng, tau_add) == 0:
+        mag = cell.rng.normal(loc=mag_mean, scale=mag_std)
+        patch = mag * mvg_patch(cell, cntr_probs)
+
+    # assess membrane tension
+    target_perimeter = 2 * np.pi * R_ten
     mem_tension = shape_induced_stress(cell, target_perimeter)
 
+    # update polarity field
     return p_field + (
-        (dt * mvg_patch * phi)
+        (dt * patch * phi)
         - (dt / tau * p_field)
         - (dt / tau_x * mp * phi)
         - (dt / tau_ten * mem_tension)
     )
+
+
+def _poisson_add_time(rng, rate):
+    tau_add = rng.poisson(rate)
+    while tau_add == 0:
+        tau_add = rng.poisson(rate)
+    return tau_add
+
+
+def _sigmoid(x, center, eps):
+    return 1 / (1 + np.exp((-x + center) / eps))

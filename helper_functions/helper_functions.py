@@ -33,7 +33,6 @@ def find_contour(field, level=0.5, interpolate=False, n_pts=50):
             dl = line.length / n_pts
             pts = [line.interpolate(dl * i) for i in range(n_pts)]
             pts = np.array([[pt.y, pt.x] for pt in pts])
-            # pts = np.unique(pts, axis=0)
             sets.append(pts)
         yx_cntr = sets
 
@@ -162,44 +161,9 @@ def evolve_cell(cell, force, mp, n):
     # needed more than once
     grad_x, grad_y, _ = compute_gradients(cell.phi, cell.simbox.dx)
     grad_phi = np.array([grad_x, grad_y])
-    eta = cell.eta
-    picked_c = [-1, -1]
-    mag = 0
 
-    if cell.pol_model_kwargs["_pixel_noise"]:
-        p_field_next = cell.p_field + polarity.pixel_random_noise(cell, D=0.05)
-
-    else:
-        # contour PMF to add mvg patch
-        p1 = polarity.cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
-        p2 = polarity.cntr_probs_feedback(
-            cell, grad_phi, delta_l=cell.pol_model_kwargs["_go_in"]
-        )
-
-        if cell._prob_type == "p1":
-            cntr_probs = p1
-        elif cell._prob_type == "p2":
-            cntr_probs = p2
-        elif cell._prob_type == "none":
-            cntr_probs = None
-        else:
-            cntr_probs = p1 * p2
-            cntr_probs /= cntr_probs.sum()
-
-        # add MVG patch according to a Poisson process
-        tau_add = _poisson_add_time(cell.rng, cell.pol_model_kwargs["add_rate"])
-        mvg_patch = 0
-
-        if n % tau_add == 0:
-            mag = cell.rng.normal(
-                loc=cell.pol_model_kwargs["mag_mean"],
-                scale=cell.pol_model_kwargs["mag_std"],
-            )
-            mvg_patch, picked_c = polarity.mvg_patch(cell, cntr_probs)
-            mvg_patch *= mag
-
-        # polarization field (n+1)
-        p_field_next = polarity.update_field(cell, mp, mvg_patch, cell.pol_model_kwargs)
+    # polarization field (n+1)
+    p_field_next = polarity.update_field(cell, grad_phi, mp, n)
 
     # phi_(n+1)
     phi_i_next, dF_dphi = _update_field(cell, grad_phi, force)
@@ -214,13 +178,13 @@ def evolve_cell(cell, force, mp, n):
     # UPDATE class variables now
     cell.phi = phi_i_next
     cell.p_field = p_field_next
-    cell.contour = find_contour(cell.phi, interpolate=cell._cntr_interp)
+    cell.contour = find_contour(
+        cell.phi, interpolate=cell.pol_model_kwargs["interpolate_cntrs"]
+    )
     cell.cm = compute_CM(cell)
     cell.v_cm = compute_v_CM(cell)
-    cell.vx = (fx_thermo + fx_motil) / eta
-    cell.vy = (fy_thermo + fy_motil) / eta
-
-    return picked_c, mag
+    cell.vx = (fx_thermo + fx_motil) / cell.eta
+    cell.vy = (fy_thermo + fy_motil) / cell.eta
 
 
 def _update_field(cell, grad_phi, force):
@@ -236,10 +200,3 @@ def _update_field(cell, grad_phi, force):
     v_dot_gradphi = vx_i * grad_x + vy_i * grad_y
 
     return phi_i - dt * (dF_dphi + v_dot_gradphi), dF_dphi
-
-
-def _poisson_add_time(rng, rate):
-    tau_add = rng.poisson(rate)
-    while tau_add == 0:
-        tau_add = rng.poisson(rate)
-    return tau_add
