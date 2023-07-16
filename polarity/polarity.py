@@ -261,8 +261,8 @@ def update_field(cell, grad_phi, mp, n):
     tau_x = cell.pol_model_kwargs["tau_x"]
     tau_ten = cell.pol_model_kwargs["tau_ten"]
     tau_add = cell.pol_model_kwargs["add_rate"]
-    mag_mean = (cell.pol_model_kwargs["mag_mean"],)
-    mag_std = (cell.pol_model_kwargs["mag_std"],)
+    mag_mean = cell.pol_model_kwargs["mag_mean"]
+    mag_std = cell.pol_model_kwargs["mag_std"]
 
     # PMF for contours to see MVG hit
     p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
