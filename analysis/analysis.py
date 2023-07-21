@@ -10,7 +10,7 @@ mu_factor = 6  # conversion to microns
 min_factor = 8  # conversion to minutes
 
 
-def read_fulltake(filename):
+def read_fulltake(filename, scale_position=False):
     ext = filename.split(".")[-1]
     if ext == "parquet":
         df = pd.read_parquet(filename)
@@ -19,8 +19,9 @@ def read_fulltake(filename):
     else:
         raise NotImplementedError(f"Reading file extension {ext} not implemented.")
 
-    df.x *= mu_factor
-    df.y *= mu_factor
+    if scale_position:
+        df.x *= mu_factor
+        df.y *= mu_factor
     return df
 
 
