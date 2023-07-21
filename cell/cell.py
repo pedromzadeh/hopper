@@ -208,6 +208,8 @@ class Cell:
                 "tau_x": config["tau_x"],
                 "tau_ten": config["tau_ten"],
                 "interpolate_cntrs": config["interpolate_cntrs"],
+                "R_ten_factor": config["R_ten_factor"],
+                "perturbation": config["perturbation"],
             }
 
         with open(path, "r") as file:

@@ -169,6 +169,28 @@ def cntr_probs_feedback(cell, norm=True, grad_phi=None, delta_l=None):
     return p
 
 
+def cntr_probs_feedback_P(cell, norm=True, grad_phi=None, delta_l=None):
+    cntr = cell.contour[0][:, ::-1]
+    in_frame_cntr = cntr * cell.simbox.dx - cell.cm[1]
+    p_at_cntr = polarity_at_cntr(cell)
+    p = p_at_cntr + 1e-5
+
+    if norm and p.sum() > 0:
+        return p / p.sum()
+    return p
+
+
+def cntr_probs_feedback_R(cell, norm=True, grad_phi=None, delta_l=None):
+    cntr = cell.contour[0][:, ::-1]
+    in_frame_cntr = cntr * cell.simbox.dx - cell.cm[1]
+    radii = np.linalg.norm(in_frame_cntr, axis=1)
+    p = radii + 1e-5
+
+    if norm and p.sum() > 0:
+        return p / p.sum()
+    return p
+
+
 def mvg_patch(cell, cntr_probs=None, cov_ii=20, cov_ij=0, cntr_pt=None, return_c=False):
     """
     Returns a multivariate Gaussian (mvg) centered at a contour point, which is
@@ -255,7 +277,10 @@ def update_field(cell, grad_phi, mp, n):
     p_field = cell.p_field
     phi = cell.phi
     dt = cell.simbox.dt
-    R_ten = 1.5 * cell.R_eq
+    # R_ten = 1.5 * cell.R_eq
+
+    R_ten = cell.pol_model_kwargs["R_ten_factor"] * cell.R_eq
+    pert_id = int(cell.pol_model_kwargs["perturbation"])
 
     tau = cell.pol_model_kwargs["tau"]
     tau_x = cell.pol_model_kwargs["tau_x"]
@@ -265,10 +290,30 @@ def update_field(cell, grad_phi, mp, n):
     mag_std = cell.pol_model_kwargs["mag_std"]
 
     # PMF for contours to see MVG hit
-    p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
-    p2 = cntr_probs_feedback(cell)
-    cntr_probs = p1 * p2
-    cntr_probs /= cntr_probs.sum()
+    if pert_id == 0:
+        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
+        p2 = cntr_probs_feedback(cell)
+        cntr_probs = p1 * p2
+        cntr_probs /= cntr_probs.sum()
+
+    elif pert_id == 1:
+        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
+        p2 = cntr_probs_feedback_P(cell)
+        cntr_probs = p1 * p2
+        cntr_probs /= cntr_probs.sum()
+
+    elif pert_id == 2:
+        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
+        p2 = cntr_probs_feedback_R(cell)
+        cntr_probs = p1 * p2
+        cntr_probs /= cntr_probs.sum()
+
+    elif pert_id == 3:
+        cntr_probs = cntr_probs_feedback(cell)
+        cntr_probs /= cntr_probs.sum()
+
+    else:
+        raise ValueError(f"{pert_id} not understood.")
 
     # add MVG patch according to a Poisson process
     patch = 0
