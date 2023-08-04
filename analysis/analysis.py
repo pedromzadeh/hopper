@@ -36,11 +36,16 @@ def bootstrap(df, n_samples, seed):
     )
 
 
-def apply_time_filter(df, dt):
+def apply_time_filter(df, dt=None):
     """
-    dt : float, in min
+    dt : float, optional
+        Pass temporal window in minutes. By default None, which uses
+        the tau_mvg value.
     """
-    df["ts"] = df["time[hr]"] * 60 // dt
+    if dt is None:
+        dt = df.iloc[0].add_rate
+
+    df["ts"] = np.round(df["time[hr]"].values * 60) // dt
     return df.drop_duplicates(subset=["ts", "rid"], keep="first").reset_index(drop=True)
 
 
@@ -62,10 +67,12 @@ def linear_lattice(xmin, xmax, vmin, vmax, n_pts, s=1, basin_only=False):
 
 
 def full_lattice(F, xmin, xmax, vmin, vmax, nbins):
-    X, Y = np.meshgrid(
-        np.linspace(xmin, xmax, nbins),
-        np.linspace(vmin, vmax, nbins),
-    )
+    dx = (xmax - xmin) / nbins
+    dv = (vmax - vmin) / nbins
+    X, Y = np.meshgrid(np.arange(nbins), np.arange(nbins))
+    X = X * dx + xmin + dx / 2
+    Y = Y * dv + vmin + dv / 2
+
     non_nans = np.argwhere(~np.isnan(F))
     x, y = X[0][non_nans[:, 1]], Y[:, 0][non_nans[:, 0]]
     return X, Y, np.hstack([x.reshape(-1, 1), y.reshape(-1, 1)])
@@ -95,7 +102,11 @@ def get_xva_df(fulltake_df, nbins):
         )
     )
 
-    get_bin_indices(grid_x_v_a, nbins)
+    bounds = grid_x_v_a.agg(["min", "max"])
+    xmin, xmax = bounds["x"]
+    vmin, vmax = bounds["v"]
+
+    get_bin_indices(grid_x_v_a, nbins, xmin, xmax, vmin, vmax)
 
     return grid_x_v_a
 
@@ -159,11 +170,8 @@ def calc_v_a_from_position(x, dt):
     return pd.DataFrame(res.T, columns=["x", "v", "a"])
 
 
-def get_bin_indices(df, nbins):
+def get_bin_indices(df, nbins, xmin, xmax, vmin, vmax):
     # define binned space
-    bounds = df.agg(["min", "max"])
-    xmin, xmax = bounds["x"]
-    vmin, vmax = bounds["v"]
     dx = (xmax - xmin) / nbins
     dv = (vmax - vmin) / nbins
 
@@ -266,7 +274,10 @@ def make_title(df):
     d = dict(df.iloc[0])
     title = ""
     for key, _ in tbl.items():
-        title += tbl[key] + " = " + f"{d[key]}" + "\n"
+        try:
+            title += tbl[key] + " = " + f"{d[key]}" + "\n"
+        except KeyError:
+            continue
     return title
 
 
@@ -297,15 +308,155 @@ def F_streamplot(
     _plot_streams(F, bounds, stream_init_pts, ax, do_try, streamplot_kwargs)
 
 
+def evaluate_F_v_x0(V, F, nbins, delta=1):
+    F_v_x0 = F[:, nbins // 2 - delta : nbins // 2 + delta]
+    F_v_x0 = F_v_x0.mean(axis=1)
+    mask = ~np.isnan(F_v_x0)
+    return V[mask, 0], F_v_x0[mask]
+
+
+def get_labels(pts, X, Y, F):
+    import matplotlib.pyplot as plt
+
+    colors = []
+
+    for xx, yy in pts:
+        fig, ax = plt.subplots(1, 1)
+        try:
+            stream = ax.streamplot(
+                X,
+                Y,
+                Y,
+                F,
+                linewidth=0.5,
+                start_points=[[xx, yy]],
+                integration_direction="forward",
+                color="black",
+                broken_streamlines=False,
+                density=1,
+            )
+            streamlines = np.array(stream.lines.get_segments())
+            plt.close(fig)
+
+            if len(streamlines) == 0:
+                colors.append("gainsboro")
+                continue
+
+            end_pt = streamlines[-1][-1]
+            if end_pt[0] < 133:
+                colors.append("salmon")
+            elif end_pt[0] > 167:
+                colors.append("cornflowerblue")
+            else:
+                colors.append("wheat")
+
+        except ValueError:
+            colors.append("gainsboro")
+            plt.close(fig)
+            continue
+
+    return colors
+
+
+def lattice_to_image(xv_pts, labels, bounds):
+    xmin, xmax, vmin, vmax, nbins = bounds
+
+    legend_dict = {"salmon": 2, "cornflowerblue": 0, "wheat": 1, "gainsboro": np.nan}
+    img = np.ones(shape=(nbins, nbins)) * np.nan
+    xv = pd.DataFrame(xv_pts, columns=["x", "v"])
+    get_bin_indices(xv, nbins, xmin, xmax, vmin, vmax)
+    indx = xv[["v_bin", "x_bin"]].values
+    for ij, val in zip(indx, [legend_dict[lbl] for lbl in labels]):
+        img[ij[0], ij[1]] = val
+
+    return img
+
+
+def get_separatrices(image, **contour_kwargs):
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(1, 1)
+    paths = ax.contour(image, **contour_kwargs)
+    plt.close(fig)
+
+    paths = [paths.collections[i].get_paths() for i in range(len(paths.collections))]
+
+    X = []
+    for path in paths:
+        for p in path:
+            X.append(p.vertices)
+            X.append([np.nan, np.nan])
+    X = np.vstack(X)
+    return X
+
+
+def assign_basin_id(x, xL, xR):
+    if x < xL:
+        return 0
+    elif x > xR:
+        return 1
+    else:
+        return -1
+
+
+def group_consecutive_values(arr):
+    res_indx = []
+    res = []
+
+    curr_indx = 0
+    while curr_indx < len(arr) - 1:
+        if arr[curr_indx] == arr[curr_indx + 1]:
+            curr_indx += 1
+            continue
+
+        res_indx.append([curr_indx, curr_indx + 1])
+        res.append([arr[curr_indx], arr[curr_indx + 1]])
+        curr_indx += 1
+
+    return np.array(res_indx), np.array(res)
+
+
+def get_itinerary(df, xL=133, xR=167, ax=None, plot_segments=False):
+    states = df.x.apply(assign_basin_id, xL=xL, xR=xR).values
+    change_indx, change_vals = group_consecutive_values(states)
+    if change_vals.shape[0] == 0:
+        return None
+
+    change_time_table = np.insert(change_vals, 2, change_indx[:, 0], axis=1)
+    arrive_depart_table = []
+    for i in np.arange(0, change_time_table.shape[0], 2):
+        chunk = change_time_table[i : i + 2]
+        if np.unique(chunk[:, :2]).shape[0] == 3:
+            arrive_depart_table.append([chunk[0, -1], chunk[1, -1]])
+
+    q = np.unique(np.array(arrive_depart_table).reshape(-1, 2), axis=0)
+    q = np.insert(q, 0, 0)
+    q = np.insert(q, q.shape[0], df.index[-1]).reshape(-1, 2).astype(int)
+
+    if plot_segments:
+        assert ax is not None
+        [ax.plot(df.iloc[s:e].x, df.iloc[s:e].y, alpha=0.5) for s, e in q]
+        ax.set_ylim((140, 160))
+        ax.vlines([xL, xR], *ax.get_ylim(), linestyles=["dashed"], colors=["black"])
+
+    return q
+
+
+def compute_cdf(x):
+    if not isinstance(x, pd.Series):
+        x = pd.Series(x)
+    return x.value_counts().sort_index().cumsum() / x.size
+
+
 def _plot_streams(F, bounds, init_pts, ax, do_try, streamplot_kwargs):
     xmin, xmax, vmin, vmax, nbins = bounds
 
     # make stremplot for F(x, v)
-    buffer = 0.5
-    X, Y = np.meshgrid(
-        np.linspace(xmin + buffer, xmax - buffer, nbins),
-        np.linspace(vmin + buffer, vmax - buffer, nbins),
-    )
+    dx = (xmax - xmin) / nbins
+    dv = (vmax - vmin) / nbins
+    X, Y = np.meshgrid(np.arange(nbins), np.arange(nbins))
+    X = X * dx + xmin + dx / 2
+    Y = Y * dv + vmin + dv / 2
 
     if not do_try:
         ax.streamplot(X, Y, Y, F, start_points=init_pts, **streamplot_kwargs)
