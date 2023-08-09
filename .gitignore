@@ -4,6 +4,7 @@ configs/IM/
 output/
 _server/_outfiles
 _server/sim_data/
+_notebooks/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
