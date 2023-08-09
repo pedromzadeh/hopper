@@ -277,7 +277,6 @@ def update_field(cell, grad_phi, mp, n):
     p_field = cell.p_field
     phi = cell.phi
     dt = cell.simbox.dt
-    # R_ten = 1.5 * cell.R_eq
 
     R_ten = cell.pol_model_kwargs["R_ten_factor"] * cell.R_eq
     pert_id = int(cell.pol_model_kwargs["perturbation"])
@@ -289,31 +288,8 @@ def update_field(cell, grad_phi, mp, n):
     mag_mean = cell.pol_model_kwargs["mag_mean"]
     mag_std = cell.pol_model_kwargs["mag_std"]
 
-    # PMF for contours to see MVG hit
-    if pert_id == 0:
-        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
-        p2 = cntr_probs_feedback(cell)
-        cntr_probs = p1 * p2
-        cntr_probs /= cntr_probs.sum()
-
-    elif pert_id == 1:
-        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
-        p2 = cntr_probs_feedback_P(cell)
-        cntr_probs = p1 * p2
-        cntr_probs /= cntr_probs.sum()
-
-    elif pert_id == 2:
-        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4)
-        p2 = cntr_probs_feedback_R(cell)
-        cntr_probs = p1 * p2
-        cntr_probs /= cntr_probs.sum()
-
-    elif pert_id == 3:
-        cntr_probs = cntr_probs_feedback(cell)
-        cntr_probs /= cntr_probs.sum()
-
-    else:
-        raise ValueError(f"{pert_id} not understood.")
+    # PMF for contours to see MVG hit given perturbation to the model
+    cntr_probs = _model_perturbation_probs(pert_id, cell, grad_phi, mp, delta_l=4)
 
     # add MVG patch according to a Poisson process
     patch = 0
@@ -332,6 +308,33 @@ def update_field(cell, grad_phi, mp, n):
         - (dt / tau_x * mp * phi)
         - (dt / tau_ten * mem_tension)
     )
+
+
+def _model_perturbation_probs(pert_id, cell, grad_phi, mp, delta_l=4):
+    if pert_id == 0:
+        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l)
+        p2 = cntr_probs_feedback(cell)
+        cntr_probs = p1 * p2
+        return cntr_probs / cntr_probs.sum()
+
+    elif pert_id == 1:
+        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l)
+        p2 = cntr_probs_feedback_P(cell)
+        cntr_probs = p1 * p2
+        return cntr_probs / cntr_probs.sum()
+
+    elif pert_id == 2:
+        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l)
+        p2 = cntr_probs_feedback_R(cell)
+        cntr_probs = p1 * p2
+        return cntr_probs / cntr_probs.sum()
+
+    elif pert_id == 3:
+        cntr_probs = cntr_probs_feedback(cell)
+        return cntr_probs / cntr_probs.sum()
+
+    else:
+        raise ValueError(f"{pert_id} not understood.")
 
 
 def _poisson_add_time(rng, rate):
