@@ -69,7 +69,7 @@ def cell_configs(pol_type, grid_axes_kwargs):
         "tau_ten": [1.0],
         "interpolate_cntrs": [False],
         "R_ten_factor": [1.5],
-        "perturbation": [0],
+        "perturbation": [1],
     }
 
     return list(ParameterGrid(grid_axes_kwargs | cell_kwargs | pol_model_kwargs))
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     # grid search over...
     gammas = np.linspace(0.8, 1.8, 2)
     mag_stds = np.linspace(22.5, 37.5, 2)
-    add_rates = np.linspace(0.0045, 0.009, 2)
+    add_rates = np.linspace(0.0045, 0.009, 2)  # x 8 x 60 --> seconds
     R_eqs = np.linspace(2.5, 3.0, 2)
 
     grid_axes_kwargs = {
