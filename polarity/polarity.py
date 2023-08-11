@@ -284,17 +284,17 @@ def update_field(cell, grad_phi, mp, n):
     tau = cell.pol_model_kwargs["tau"]
     tau_x = cell.pol_model_kwargs["tau_x"]
     tau_ten = cell.pol_model_kwargs["tau_ten"]
-    tau_add = cell.pol_model_kwargs["add_rate"]
-    mag_mean = cell.pol_model_kwargs["mag_mean"]
-    mag_std = cell.pol_model_kwargs["mag_std"]
+    tau_mvg = cell.pol_model_kwargs["tau_mvg"]
+    mu_mvg = cell.pol_model_kwargs["mu_mvg"]
+    sigma_mvg = cell.pol_model_kwargs["sigma_mvg"]
 
     # PMF for contours to see MVG hit given perturbation to the model
     cntr_probs = _model_perturbation_probs(pert_id, cell, grad_phi, mp, delta_l=4)
 
-    # add MVG patch every tau_add phase-field units of time
+    # add MVG patch every tau_mvg phase-field units of time
     patch = 0
-    if n % (tau_add // dt) == 0:
-        mag = cell.rng.normal(loc=mag_mean, scale=mag_std)
+    if n % (tau_mvg // dt) == 0:
+        mag = cell.rng.normal(loc=mu_mvg, scale=sigma_mvg)
         patch = mag * mvg_patch(cell, cntr_probs)
 
     # assess membrane tension

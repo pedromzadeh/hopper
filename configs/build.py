@@ -15,11 +15,11 @@ def simbox_configs(snapshots, L_two_state=73):
         raise ValueError(f"{snapshots} must be either `many` or `few`.")
 
     base_config = {
-        "N": 120000,  # total simulation time
-        "dt": 0.0015,  # time step (~ 0.72s given 1pft = 8min)
+        "N": 240000,  # total simulation time
+        "dt": 0.00075,  # time step (~ 0.36s given 1pft = 8min)
         "N_mesh": 200,  # lattice grid size
         "L_box": 50,  # size of simulation box in real units
-        "stat_collection_freq": 250,  # frequency of collecting pre-collision stats
+        "stat_collection_freq": 500,  # frequency of collecting pre-collision stats
         "simbox_view_freq": n_simbox_view,  # frequency of outputting the view of simbox
     }
     two_state = {
@@ -56,12 +56,20 @@ def cell_configs(pol_type, grid_axes_kwargs):
     }
 
     # static polarity model params
+    # perturbation ids:
+    #       0) None
+    #       1) P_feedback ~ P
+    #       2) P_feedback ~ R
+    #       3) P_filopodia ~ Uniform
+
     pol_model_kwargs = {
-        "mag_mean": [5000],
+        "mu_mvg": [7.5],
         "tau": [0.5],
         "tau_x": [0.02],
         "tau_ten": [1.0],
         "interpolate_cntrs": [False],
+        "R_ten_factor": [1.5],
+        "perturbation": [0],
     }
 
     return list(ParameterGrid(grid_axes_kwargs | cell_kwargs | pol_model_kwargs))
@@ -73,14 +81,14 @@ if __name__ == "__main__":
 
     # grid search over...
     gammas = np.linspace(0.8, 1.8, 2)
-    mag_stds = np.linspace(15000, 25000, 2)
-    add_rates = np.linspace(3, 6, 2)
+    mag_stds = np.linspace(22.5, 37.5, 2)
+    add_rates = np.linspace(0.0045, 0.009, 2)
     R_eqs = np.linspace(2.5, 3.0, 2)
 
     grid_axes_kwargs = {
         "gamma": list(map(float, gammas)),
-        "mag_std": list(map(float, mag_stds)),
-        "add_rate": list(map(float, add_rates)),
+        "sigma_mvg": list(map(float, mag_stds)),
+        "tau_mvg": list(map(float, add_rates)),
         "R_eq": list(map(float, R_eqs)),
     }
     grid = cell_configs(pol_type, grid_axes_kwargs)

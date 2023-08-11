@@ -201,9 +201,9 @@ class Cell:
     def _load_parameters(self, path):
         def _polarity_params(config):
             return {
-                "add_rate": config["add_rate"],
-                "mag_mean": config["mag_mean"],
-                "mag_std": config["mag_std"],
+                "tau_mvg": config["tau_mvg"],
+                "mu_mvg": config["mu_mvg"],
+                "sigma_mvg": config["sigma_mvg"],
                 "tau": config["tau"],
                 "tau_x": config["tau_x"],
                 "tau_ten": config["tau_ten"],
