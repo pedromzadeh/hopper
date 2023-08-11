@@ -291,9 +291,9 @@ def update_field(cell, grad_phi, mp, n):
     # PMF for contours to see MVG hit given perturbation to the model
     cntr_probs = _model_perturbation_probs(pert_id, cell, grad_phi, mp, delta_l=4)
 
-    # add MVG patch according to a Poisson process
+    # add MVG patch every tau_add phase-field units of time
     patch = 0
-    if n % _poisson_add_time(cell.rng, tau_add) == 0:
+    if n % (tau_add // dt) == 0:
         mag = cell.rng.normal(loc=mag_mean, scale=mag_std)
         patch = mag * mvg_patch(cell, cntr_probs)
 
@@ -303,7 +303,7 @@ def update_field(cell, grad_phi, mp, n):
 
     # update polarity field
     return p_field + (
-        (dt * patch * phi)
+        (patch * phi)
         - (dt / tau * p_field)
         - (dt / tau_x * mp * phi)
         - (dt / tau_ten * mem_tension)
