@@ -63,7 +63,7 @@ def cell_configs(pol_type, grid_axes_kwargs):
         "tau_ten": [1.0],
         "interpolate_cntrs": [False],
         "R_ten_factor": [1.5],
-        "perturbation": [0],
+        "perturbation": [1],
     }
 
     return list(ParameterGrid(grid_axes_kwargs | cell_kwargs | pol_model_kwargs))
