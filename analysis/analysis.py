@@ -91,7 +91,7 @@ def get_xva_df(fulltake_df, nbins):
         grid_x_v_a.append(x_v_a)
 
     grid_x_v_a = pd.concat(grid_x_v_a)
-    features = ["gamma", "R_eq", "mag_std", "add_rate", "gid"]
+    features = ["gamma", "R_eq", "sigma_mvg", "tau_mvg", "gid"]
     d = dict(fulltake_df.iloc[0])
     for key in features:
         grid_x_v_a[key] = d[key]
@@ -266,8 +266,8 @@ def make_title(df):
     tbl = {
         "gamma": r"$\gamma$",
         "R_eq": r"$R_{eq}$",
-        "mag_std": r"$\sigma_{MVG}$",
-        "add_rate": r"$\tau_{MVG}$",
+        "sigma_mvg": r"$\sigma_{MVG}$",
+        "tau_mvg": r"$\tau_{MVG}$",
         "gid": "ID",
         "substrate": "Substrate",
     }
@@ -275,7 +275,8 @@ def make_title(df):
     title = ""
     for key, _ in tbl.items():
         try:
-            title += tbl[key] + " = " + f"{d[key]}" + "\n"
+            val = np.round(d[key] * 8 * 60, 2) if key == "tau_mvg" else d[key]
+            title += tbl[key] + " = " + f"{val}" + "\n"
         except KeyError:
             continue
     return title
