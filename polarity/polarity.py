@@ -10,23 +10,6 @@ def polarity_at_cntr(cell, method="linear"):
     return interp(cntr)
 
 
-def polarity_at_shifted_cntr(cell, grad_phi, d_l, method="linear"):
-    p_field = np.where(cell.p_field > 0, cell.p_field, 0)
-    x = np.arange(cell.simbox.N_mesh)
-    interp = RegularGridInterpolator((x, x), p_field, method=method)
-
-    cntr = cell.contour[0]
-    grad_phi_norm = np.sqrt(np.sum(grad_phi * grad_phi, axis=0)) + 1e-10
-    n_hat = -grad_phi / grad_phi_norm
-    cntr = np.array(
-        [
-            [y - d_l * n_hat[1][int(y), int(x)], x - d_l * n_hat[0][int(y), int(x)]]
-            for y, x in cntr
-        ]
-    )
-    return interp(cntr)
-
-
 def shape_induced_stress(cell, perim_0):
     """
     Returns an estimate for the stress caused by elongated shapes.
@@ -73,11 +56,10 @@ def dFpol_dP(cell, nu, target):
     return 2 * nu * (1 - P_tot / target) * (-1 / target)
 
 
-def cntr_probs_filopodia(cell, grad_phi, mp, delta_l, method="linear", norm=True):
+def cntr_probs_filopodia(cell, grad_phi, mp, delta_l=4, method="linear", norm=True):
     """
-    Assigns probabilities to each contour point to experience a protrusive patch given
-    the micropattern. This basically projects each contour point normally outward,
-    r + nl, and asks whether the micropattern is present or not.
+    Probability of each contour point assigned based on the existence of
+    micropattern a given normal distance away from the point.
 
     Parameters
     ----------
@@ -90,8 +72,9 @@ def cntr_probs_filopodia(cell, grad_phi, mp, delta_l, method="linear", norm=True
     mp : np.ndarray of shape (N_mesh, N_mesh)
         The field for the micropatntern.
 
-    delta_l : float
+    delta_l : float, optional
         Amount by which we protrude outside the cell, in phase-field units.
+        Default is 4.
 
     method : str
         One of "linear", "nearest", "slinear", "cubic", "quintic", "pchip"
@@ -101,12 +84,9 @@ def cntr_probs_filopodia(cell, grad_phi, mp, delta_l, method="linear", norm=True
     norm : bool, optional
         If True, probabilities are normalized, else not, by default True
 
-
     Returns
     -------
     np.ndarray of shape (# of contour points, )
-        PMF of each contour point to experience a protrusive patch given the
-        micropattern.
     """
     cntr = cell.contour[0][:, ::-1]
     grad_phi_norm = np.sqrt(np.sum(grad_phi * grad_phi, axis=0)) + 1e-10
@@ -129,35 +109,8 @@ def cntr_probs_filopodia(cell, grad_phi, mp, delta_l, method="linear", norm=True
     return p
 
 
-def cntr_probs_feedback(cell, norm=True, grad_phi=None, delta_l=None):
-    """
-    Assigns probabilities to each contour point to experience a protrusive patch given
-    the positive feedback at already highly protrusive sites. Bascially, sites that are
-    far and high in polarity already, P[r] R[r], are reinforced.
-
-    Parameters
-    ----------
-    cell : Cell object
-        The cell whose contour points we're after.
-
-    grad_phi : np.ndarray of shape (2, N_mesh, N_mesh)
-        Gradient of the phase-field, with grad_x, grad_y, respectively.
-
-    R_c : float, optional
-        If given, feedback turns on smoothly for radii larger than R_c and
-        is off for those smaller. If None, feedback is on for all radii.
-        By default None
-
-    norm : bool, optional
-        If True, probabilities are normalized, else not, by default True
-
-    Returns
-    -------
-    np.ndarray of shape (# of contour points, )
-        PMF of each contour point to experience a protrusive patch given the
-        micropattern.
-    """
-    # probs due to feedback
+def cntr_probs_feedback_times_radius(cell, norm=True):
+    # probs due to feedback and distance from cell CM
     cntr = cell.contour[0][:, ::-1]
     in_frame_cntr = cntr * cell.simbox.dx - cell.cm[1]
     p_at_cntr = polarity_at_cntr(cell)
@@ -169,22 +122,25 @@ def cntr_probs_feedback(cell, norm=True, grad_phi=None, delta_l=None):
     return p
 
 
-def cntr_probs_feedback_P(cell, norm=True, grad_phi=None, delta_l=None):
-    cntr = cell.contour[0][:, ::-1]
-    in_frame_cntr = cntr * cell.simbox.dx - cell.cm[1]
+def cntr_probs_feedback(cell, norm=True):
+    """
+    Probability of each contour point assigned based on the existing
+    polarity value at that point.
+
+    Parameters
+    ----------
+    cell : Cell object
+        The cell whose contour points we're after.
+
+    norm : bool, optional
+        If True, probabilities are normalized, else not, by default True
+
+    Returns
+    -------
+    np.ndarray of shape (# of contour points, )
+    """
     p_at_cntr = polarity_at_cntr(cell)
     p = p_at_cntr + 1e-5
-
-    if norm and p.sum() > 0:
-        return p / p.sum()
-    return p
-
-
-def cntr_probs_feedback_R(cell, norm=True, grad_phi=None, delta_l=None):
-    cntr = cell.contour[0][:, ::-1]
-    in_frame_cntr = cntr * cell.simbox.dx - cell.cm[1]
-    radii = np.linalg.norm(in_frame_cntr, axis=1)
-    p = radii + 1e-5
 
     if norm and p.sum() > 0:
         return p / p.sum()
@@ -279,8 +235,6 @@ def update_field(cell, grad_phi, mp, n):
     dt = cell.simbox.dt
 
     R_ten = cell.pol_model_kwargs["R_ten_factor"] * cell.R_eq
-    pert_id = int(cell.pol_model_kwargs["perturbation"])
-
     tau = cell.pol_model_kwargs["tau"]
     tau_x = cell.pol_model_kwargs["tau_x"]
     tau_ten = cell.pol_model_kwargs["tau_ten"]
@@ -288,8 +242,11 @@ def update_field(cell, grad_phi, mp, n):
     mu_mvg = cell.pol_model_kwargs["mu_mvg"]
     sigma_mvg = cell.pol_model_kwargs["sigma_mvg"]
 
-    # PMF for contours to see MVG hit given perturbation to the model
-    cntr_probs = _model_perturbation_probs(pert_id, cell, grad_phi, mp, delta_l=4)
+    # PMF for contours to see MVG -- filopodia * feedback
+    p1 = cntr_probs_filopodia(cell, grad_phi, mp)
+    p2 = cntr_probs_feedback(cell)
+    cntr_probs = p1 * p2
+    cntr_probs = cntr_probs / cntr_probs.sum()
 
     # add MVG patch every tau_mvg phase-field units of time
     patch = 0
@@ -308,41 +265,3 @@ def update_field(cell, grad_phi, mp, n):
         - (dt / tau_x * mp * phi)
         - (dt / tau_ten * mem_tension)
     )
-
-
-def _model_perturbation_probs(pert_id, cell, grad_phi, mp, delta_l=4):
-    if pert_id == 0:
-        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l)
-        p2 = cntr_probs_feedback(cell)
-        cntr_probs = p1 * p2
-        return cntr_probs / cntr_probs.sum()
-
-    elif pert_id == 1:
-        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l)
-        p2 = cntr_probs_feedback_P(cell)
-        cntr_probs = p1 * p2
-        return cntr_probs / cntr_probs.sum()
-
-    elif pert_id == 2:
-        p1 = cntr_probs_filopodia(cell, grad_phi, mp, delta_l)
-        p2 = cntr_probs_feedback_R(cell)
-        cntr_probs = p1 * p2
-        return cntr_probs / cntr_probs.sum()
-
-    elif pert_id == 3:
-        cntr_probs = cntr_probs_feedback(cell)
-        return cntr_probs / cntr_probs.sum()
-
-    else:
-        raise ValueError(f"{pert_id} not understood.")
-
-
-def _poisson_add_time(rng, rate):
-    tau_add = rng.poisson(rate)
-    while tau_add == 0:
-        tau_add = rng.poisson(rate)
-    return tau_add
-
-
-def _sigmoid(x, center, eps):
-    return 1 / (1 + np.exp((-x + center) / eps))
