@@ -214,6 +214,9 @@ def update_field(cell, grad_phi, mp, n):
     cell : Cell object
         The cell whose polarity field we're updating.
 
+    grad_phi : np.ndarray of shape (2, N_mesh, N_mesh)
+        Gradient of the phase-field, with grad_x, grad_y, respectively.
+
     mp : np.ndarray of shape (N_mesh, N_mesh)
         The field for the micropatntern.
 
@@ -242,11 +245,10 @@ def update_field(cell, grad_phi, mp, n):
     mu_mvg = cell.pol_model_kwargs["mu_mvg"]
     sigma_mvg = cell.pol_model_kwargs["sigma_mvg"]
 
-    # PMF for contours to see MVG -- filopodia * feedback
-    p1 = cntr_probs_filopodia(cell, grad_phi, mp)
-    p2 = cntr_probs_feedback(cell)
-    cntr_probs = p1 * p2
-    cntr_probs = cntr_probs / cntr_probs.sum()
+    # PMF for contours to see MVG -- given perturbation ID
+    cntr_probs = _model_perturbation_probs(
+        cell.pol_model_kwargs["perturbation"], cell, grad_phi, mp
+    )
 
     # add MVG patch every tau_mvg phase-field units of time
     patch = 0
@@ -265,3 +267,18 @@ def update_field(cell, grad_phi, mp, n):
         - (dt / tau_x * mp * phi)
         - (dt / tau_ten * mem_tension)
     )
+
+
+def _model_perturbation_probs(pert_id, cell, grad_phi, mp):
+    if pert_id == 0:
+        p1 = cntr_probs_filopodia(cell, grad_phi, mp)
+        p2 = cntr_probs_feedback(cell)
+        cntr_probs = p1 * p2
+        return cntr_probs / cntr_probs.sum()
+
+    elif pert_id == 1:
+        cntr_probs = cntr_probs_feedback(cell)
+        return cntr_probs / cntr_probs.sum()
+
+    else:
+        raise ValueError(f"{pert_id} not understood.")
