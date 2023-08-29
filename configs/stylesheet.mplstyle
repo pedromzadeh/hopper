@@ -1,0 +1,36 @@
+# Set x axis
+xtick.direction : in
+xtick.major.size : 6
+xtick.major.width : 0.5
+xtick.minor.size : 3
+xtick.minor.width : 0.5
+xtick.minor.visible : True
+xtick.top : True
+
+# Set y axis
+ytick.direction : in
+ytick.major.size : 6
+ytick.major.width : 0.5
+ytick.minor.size : 3
+ytick.minor.width : 0.5
+ytick.minor.visible : True
+ytick.right : True
+
+# Set line widths
+axes.linewidth : 1.0
+grid.linewidth : 0.5
+lines.linewidth : 2.
+
+# Remove legend frame
+legend.frameon : False
+
+# Always save as 'tight'
+savefig.bbox : tight
+savefig.pad_inches : 0.1
+
+# Use serif fonts
+font.family : serif
+font.serif: cmr10
+font.size : 18
+mathtext.fontset : cm
+axes.formatter.use_mathtext : True

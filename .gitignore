@@ -1,3 +1,11 @@
+configs/IM/
+*.mp4
+*.pkl
+output/
+_server/_outfiles
+_server/sim_data/
+_notebooks/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
