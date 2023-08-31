@@ -87,7 +87,7 @@ class Figure:
             levels=[0.5],
             extent=[0, L_box, 0, L_box],
             origin="lower",
-            linewidths=[3],
+            linewidths=[2],
             colors=["black"],
         )
         plt.contour(
