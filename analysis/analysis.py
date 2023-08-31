@@ -78,7 +78,7 @@ def full_lattice(F, xmin, xmax, vmin, vmax, nbins):
     return X, Y, np.hstack([x.reshape(-1, 1), y.reshape(-1, 1)])
 
 
-def get_xva_df(fulltake_df, nbins):
+def get_xva_df(fulltake_df, nbins, yfile=None):
     def _get_mp_type(yfile):
         with open(yfile) as f:
             return yaml.safe_load(f)["substrate"]["kind"]
@@ -95,12 +95,13 @@ def get_xva_df(fulltake_df, nbins):
     d = dict(fulltake_df.iloc[0])
     for key in features:
         grid_x_v_a[key] = d[key]
-    grid_x_v_a["substrate"] = _get_mp_type(
-        os.path.join(
+
+    if yfile is None:
+        yfile = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             f"configs/IM/grid_id{fulltake_df.iloc[0].gid.astype(int)}/simbox.yaml",
         )
-    )
+    grid_x_v_a["substrate"] = _get_mp_type(yfile)
 
     bounds = grid_x_v_a.agg(["min", "max"])
     xmin, xmax = bounds["x"]
