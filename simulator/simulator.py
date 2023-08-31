@@ -103,8 +103,8 @@ class Simulator:
         # simulation is done; store relevant data
         cms["gamma"] = cell.gamma
         cms["R_eq"] = cell.R_eq
-        cms["mag_std"] = cell.pol_model_kwargs["mag_std"]
-        cms["add_rate"] = cell.pol_model_kwargs["add_rate"]
+        cms["sigma_mvg"] = cell.pol_model_kwargs["sigma_mvg"]
+        cms["tau_mvg"] = cell.pol_model_kwargs["tau_mvg"]
         cms["seed"] = seed
         cms.to_csv(paths["result"])
 
