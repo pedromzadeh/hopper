@@ -200,10 +200,15 @@ class Cell:
 
     def _load_parameters(self, path):
         def _polarity_params(config):
+            try:
+                cov_ii = config["cov_ii"]
+            except KeyError:
+                cov_ii = 20
             return {
                 "tau_mvg": config["tau_mvg"],
                 "mu_mvg": config["mu_mvg"],
                 "sigma_mvg": config["sigma_mvg"],
+                "cov_ii": cov_ii,
                 "tau": config["tau"],
                 "tau_x": config["tau_x"],
                 "tau_ten": config["tau_ten"],
