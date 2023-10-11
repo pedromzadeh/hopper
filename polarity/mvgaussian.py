@@ -6,8 +6,8 @@ class MVGaussian:
         self.X = X.reshape(-1, 1, 2)
 
     def pdf(self, means, cov):
-        rank = len(means)
         self._is_sym_pos_def(cov)
+        # rank = len(means)
         # pre_factor = np.power(2 * np.pi, rank) * np.linalg.det(cov)
         # pre_factor = 1 / np.sqrt(pre_factor)
         pre_factor = 1

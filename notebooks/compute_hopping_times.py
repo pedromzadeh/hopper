@@ -1,5 +1,6 @@
 from multiprocessing import Pool, cpu_count
-from analysis.analysis import *
+from analysis.analysis import read_fulltake, get_itinerary
+import numpy as np
 import os
 
 
