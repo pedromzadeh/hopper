@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
-from glob import glob
 import yaml
-import os
 
 
 L_box = 50
@@ -11,6 +9,26 @@ min_factor = 8  # conversion to minutes
 
 
 def read_fulltake(filename, scale_position=False):
+    """
+    Read sim data file.
+
+    Parameters
+    ----------
+    filename : str
+        Full path to data.
+
+    scale_position : bool, optional
+        If True, will convert position to microns, by default False
+
+    Returns
+    -------
+    pd.DataFrame
+
+    Raises
+    ------
+    NotImplementedError
+        If file extension not .parquet or .pickle.
+    """
     ext = filename.split(".")[-1]
     if ext == "parquet":
         df = pd.read_parquet(filename)
@@ -25,7 +43,26 @@ def read_fulltake(filename, scale_position=False):
     return df
 
 
-def bootstrap(df, n_samples, seed):
+def bootstrap(df, n_samples, seed=None):
+    """
+    Generate samples from source with replacement.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The original full sim record.
+
+    n_samples : int
+        Number of runs to sample.
+
+    seed : int, optional
+        Set for reproducibility.
+
+    Returns
+    -------
+    pd.DataFrame
+        Style is identical to df.
+    """
     rng = np.random.default_rng(seed=seed)
     df_list = [elem.reset_index(drop=True) for _, elem in df.groupby("rid")]
     return pd.concat(
@@ -36,20 +73,63 @@ def bootstrap(df, n_samples, seed):
     )
 
 
-def apply_time_filter(df, dt=None):
+def apply_time_filter(df, dt, base_rate):
     """
-    dt : float, optional
-        Pass temporal window in minutes. By default None, which uses
-        the tau_mvg value.
+    Filter records based on a time window.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Original record.
+
+    dt : float
+        Time window in minutes for filtering sim data.
+
+    base_rate : float
+        Rate in minutes at which sim data has been collected.
+
+    Returns
+    -------
+    pd.DataFrame
+        Time filtered records.
+
+    Raises
+    ------
+    RuntimeError
+        Ensures time window is compatible with base rate.
     """
-    if dt is None:
-        dt = df.iloc[0].add_rate
+    if dt % base_rate != 0:
+        raise RuntimeError(
+            "Time window does not neatly fit given base rate of data collection."
+        )
 
     df["ts"] = np.round(df["time[hr]"].values * 60) // dt
     return df.drop_duplicates(subset=["ts", "rid"], keep="first").reset_index(drop=True)
 
 
 def linear_lattice(xmin, xmax, vmin, vmax, n_pts, s=1, basin_only=False):
+    """
+    Generates [x, y] points linearly spaced over the xv- phase-space.
+
+    Parameters
+    ----------
+    xmin, xmax, vmin, vmax : float
+        Bounds of the xv- phase-space.
+
+    n_pts : int
+        Number of points to generate.
+
+    s : int, optional
+        Slope of the line, by default 1
+
+    basin_only : bool, optional
+        If True, points are inside the basins only, by default False
+
+    Returns
+    -------
+    np.ndarray of shape (n_pts, 2)
+    """
+
     def _around_basin():
         d = 10
         x1 = np.linspace(xmin - d, xmin + d, n_pts)
@@ -67,6 +147,24 @@ def linear_lattice(xmin, xmax, vmin, vmax, n_pts, s=1, basin_only=False):
 
 
 def full_lattice(F, xmin, xmax, vmin, vmax, nbins):
+    """
+    Generate [x, y] lattice sites everwhere F is defined.
+
+    Parameters
+    ----------
+    F : np.ndarray of shape (nbins, nbins)
+        The footprint phase-space.
+
+    xmin, xmax, vmin, vmax : float
+        Bounds of the xv- phase-space.
+
+    nbins : int
+        Bin size.
+
+    Returns
+    -------
+    np.ndarray of shape (n_pts, 2)
+    """
     dx = (xmax - xmin) / nbins
     dv = (vmax - vmin) / nbins
     X, Y = np.meshgrid(np.arange(nbins), np.arange(nbins))
@@ -95,12 +193,6 @@ def get_xva_df(fulltake_df, nbins, yfile=None):
     d = dict(fulltake_df.iloc[0])
     for key in features:
         grid_x_v_a[key] = d[key]
-
-    if yfile is None:
-        yfile = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            f"configs/IM/grid_id{fulltake_df.iloc[0].gid.astype(int)}/simbox.yaml",
-        )
     grid_x_v_a["substrate"] = _get_mp_type(yfile)
 
     bounds = grid_x_v_a.agg(["min", "max"])
