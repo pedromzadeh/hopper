@@ -1,3 +1,7 @@
+# User-defined
+notebooks/paper_plots
+notebooks/ray_tracing.ipynb
+
 *.mp4
 *.pkl
 output/
