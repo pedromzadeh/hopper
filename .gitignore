@@ -1,9 +1,7 @@
 # User-defined
-notebooks/paper_plots
-notebooks/ray_tracing.ipynb
+processing/paper_plots
 
 *.mp4
-*.pkl
 output/
 _server/_outfiles
 _server/sim_data/

@@ -439,9 +439,11 @@ def get_labels(pts, X, Y, F):
 
             end_pt = streamlines[-1][-1]
             end_pts.append(end_pt)
-            if end_pt[0] < 133:
+            # if end_pt[0] < 133:
+            if end_pt[0] < 145:
                 colors.append("salmon")
-            elif end_pt[0] > 167:
+            # elif end_pt[0] > 167:
+            elif end_pt[0] > 155:
                 colors.append("cornflowerblue")
             else:
                 colors.append("wheat")
