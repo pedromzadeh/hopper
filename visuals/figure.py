@@ -107,3 +107,51 @@ class Figure:
             plt.close()
         else:
             plt.show()
+
+    @classmethod
+    def plot_vertical_snapshot(cls, cell, chi, dpi, path=None):
+        phi = cell.phi.T
+        p_field = cell.p_field.T
+        L_box = cell.simbox.L_box
+        chi = chi.T
+
+        p_field_masked = np.ones(p_field.shape) * np.nan
+        i, j = np.where(phi >= 0.5)
+        p_field_masked[i, j] = p_field[i, j]
+
+        plt.figure(figsize=(3, 3), dpi=dpi)
+        plt.imshow(
+            p_field_masked, extent=[0, L_box, 0, L_box], origin="lower", cmap="coolwarm"
+        )
+        # cbar = plt.colorbar()
+        # cbar = plt.colorbar(
+        #     format=FuncFormatter(lambda x, pos: "{:.2f}".format(x)), pad=0.2, shrink=0.8
+        # )
+        # cbar.set_label(r"$\mathbb{P}\equiv \phi \rho$")
+        plt.contour(
+            phi,
+            levels=[0.5],
+            extent=[0, L_box, 0, L_box],
+            origin="lower",
+            linewidths=[2],
+            colors=["black"],
+        )
+        plt.contour(
+            chi,
+            levels=[0.5],
+            extent=[0, L_box, 0, L_box],
+            origin="lower",
+            linewidths=[3],
+            colors=["black"],
+        )
+
+        plt.xlim([10, 40])
+        plt.ylim([10, 40])
+        plt.axis("off")
+        plt.tight_layout()
+
+        if path is not None:
+            plt.savefig(path)
+            plt.close()
+        else:
+            plt.show()
