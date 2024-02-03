@@ -409,7 +409,7 @@ def evaluate_F_v_x0(V, F, nbins, delta=1):
     return V[mask, 0], F_v_x0[mask]
 
 
-def get_labels(pts, X, Y, F):
+def get_labels(pts, X, Y, F, x_L=145, x_R=155):
     import matplotlib.pyplot as plt
 
     colors = []
@@ -440,12 +440,12 @@ def get_labels(pts, X, Y, F):
             end_pt = streamlines[-1][-1]
             end_pts.append(end_pt)
             # if end_pt[0] < 133:
-            if end_pt[0] < 145:
+            if end_pt[0] < x_L:
                 colors.append("salmon")
             # elif end_pt[0] > 167:
-            elif end_pt[0] > 155:
+            elif end_pt[0] > x_R:
                 colors.append("cornflowerblue")
-            elif end_pt[1] < 30 and end_pt[1] > -30:
+            elif end_pt[1] < 10 and end_pt[1] > -10:
                 colors.append("wheat")
             else:
                 colors.append("red")

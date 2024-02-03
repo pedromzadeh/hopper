@@ -29,7 +29,7 @@ def process_gid(gid, min_pts=2):
     labels = []
     end_pts = []
     X, Y, init_pts = full_lattice(F, xmin, xmax, vmin, vmax, nbins)
-    labels, end_pts = get_labels(init_pts, X, Y, F)
+    labels, end_pts = get_labels(init_pts, X, Y, F, x_L=135, x_R=165)
 
     pickle.dump(
         {
@@ -45,7 +45,7 @@ def process_gid(gid, min_pts=2):
 if __name__ == "__main__":
     from glob import glob
 
-    pool = Pool(processes=cpu_count() - 1)
+    pool = Pool(processes=cpu_count() - 2)
     # args = [
     #     2,
     #     4,
@@ -116,5 +116,4 @@ if __name__ == "__main__":
         4,
         13,
     ]
-    args = [133]
     pool.map(process_gid, args)
