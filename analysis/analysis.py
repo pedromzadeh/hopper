@@ -445,8 +445,10 @@ def get_labels(pts, X, Y, F):
             # elif end_pt[0] > 167:
             elif end_pt[0] > 155:
                 colors.append("cornflowerblue")
-            else:
+            elif end_pt[1] < 30 and end_pt[1] > -30:
                 colors.append("wheat")
+            else:
+                colors.append("red")
 
         except ValueError:
             colors.append("gainsboro")
@@ -459,7 +461,13 @@ def get_labels(pts, X, Y, F):
 def lattice_to_image(xv_pts, labels, bounds):
     xmin, xmax, vmin, vmax, nbins = bounds
 
-    legend_dict = {"salmon": 2, "cornflowerblue": 0, "wheat": 1, "gainsboro": np.nan}
+    legend_dict = {
+        "red": 3,
+        "salmon": 2,
+        "cornflowerblue": 0,
+        "wheat": 1,
+        "gainsboro": np.nan,
+    }
     img = np.ones(shape=(nbins, nbins)) * np.nan
     xv = pd.DataFrame(xv_pts, columns=["x", "v"])
     get_bin_indices(xv, nbins, xmin, xmax, vmin, vmax)
