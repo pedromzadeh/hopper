@@ -445,7 +445,7 @@ def get_labels(pts, X, Y, F, x_L=145, x_R=155):
             # elif end_pt[0] > 167:
             elif end_pt[0] > x_R:
                 colors.append("cornflowerblue")
-            elif end_pt[1] < 10 and end_pt[1] > -10:
+            elif end_pt[1] < 20 and end_pt[1] > -20:
                 colors.append("wheat")
             else:
                 colors.append("red")
