@@ -142,8 +142,10 @@ class Simulator:
         xi = sub_config["xi"]
         kind = sub_config["kind"]
         sub = Substrate(N_mesh, L_box, xi)
+        l = 38 + sub_config["buffer"]
+        d = sub_config["sub_sep"]
         if kind == "two-state":
-            chi = sub.two_state_sub(bridge_width=17)
+            chi = sub.two_state_sub(square_width=l, bridge_width=17, delta_centers=d)
         elif kind == "rectangular":
             chi = sub.rectangular()
         else:
