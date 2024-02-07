@@ -43,7 +43,7 @@ def read_fulltake(filename, scale_position=False):
     return df
 
 
-def bootstrap(df, n_samples, seed=None):
+def bootstrap(df, n_samples=None, seed=None):
     """
     Generate samples from source with replacement.
 
@@ -52,8 +52,8 @@ def bootstrap(df, n_samples, seed=None):
     df : pd.DataFrame
         The original full sim record.
 
-    n_samples : int
-        Number of runs to sample.
+    n_samples : int, optional
+        Number of runs to sample, by default number of unique runs in df.
 
     seed : int, optional
         Set for reproducibility.
@@ -64,6 +64,8 @@ def bootstrap(df, n_samples, seed=None):
         Style is identical to df.
     """
     rng = np.random.default_rng(seed=seed)
+    if n_samples is None:
+        n_samples = df.rid.unique().size
     df_list = [elem.reset_index(drop=True) for _, elem in df.groupby("rid")]
     return pd.concat(
         [
