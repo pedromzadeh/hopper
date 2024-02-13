@@ -43,8 +43,6 @@ def process_gid(gid, min_pts=2):
 
 
 if __name__ == "__main__":
-    from glob import glob
-
     pool = Pool(processes=cpu_count() - 2)
     args = [
         10,
@@ -73,4 +71,5 @@ if __name__ == "__main__":
         13,
     ]
     # args = [108, 110]  # min_pts = 1; dt = 4, base_rate = 2
+    args = [108, 110]  # not anymore
     pool.map(process_gid, args)
