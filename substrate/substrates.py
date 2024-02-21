@@ -66,7 +66,7 @@ class Substrate:
     def __str__(self):
         return "\t" + " + You are currently using the {} substrate.".format(self.type)
 
-    def rectangular(self, width=38, length=103):
+    def rectangular(self, width=38, length=111):
         # useful variables
         N_mesh = self.N_mesh
         L_box = self.L_box
