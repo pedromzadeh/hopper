@@ -86,11 +86,11 @@ class Simulator:
 
             # view the simulation box
             if n % simbox.n_view == 0:
-                Figure.plot_vertical_snapshot(
+                Figure.view_pol_field(
                     cell,
                     chi,
                     dpi=300,
-                    path=os.path.join(paths["figures"], f"img_{n}.pdf"),
+                    path=os.path.join(paths["figures"], f"img_{n}.png"),
                 )
 
             # update cell to the next time step
