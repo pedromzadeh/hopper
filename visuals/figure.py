@@ -64,7 +64,7 @@ class Figure:
         plt.close()
 
     @classmethod
-    def view_pol_field(cls, cell, chi, dpi, path=None):
+    def view_pol_field(cls, cell, chi, dpi, zoom_in=True, path=None):
         phi = cell.phi
         p_field = cell.p_field
         L_box = cell.simbox.L_box
@@ -99,9 +99,10 @@ class Figure:
             colors=["black"],
         )
 
-        plt.xlim([15, 35])
-        plt.ylim([15, 35])
-        plt.axis("off")
+        if zoom_in:
+            plt.xlim([15, 35])
+            plt.ylim([15, 35])
+        # plt.axis("off")
 
         if path is not None:
             plt.savefig(path)
