@@ -385,6 +385,7 @@ def F_streamplot(
     streamplot_kwargs,
     do_try=False,
     dpi=300,
+    vector_field=True,
     ax=None,
 ):
     import matplotlib.pyplot as plt
@@ -399,9 +400,14 @@ def F_streamplot(
     im = ax.imshow(F, extent=[xmin, xmax, vmin, vmax], **imshow_kwargs)
     cbar = plt.colorbar(im, ax=ax)
     cbar.set_label(r"$F$ ($\mu$m/hr$^2$)")
+    cbar.set_ticks([-1000, 0, 1000])
+    cbar.formatter.set_powerlimits((0, 0))
+    cbar.formatter.set_useMathText(True)
     ax.set_aspect("auto")
 
-    _plot_streams(F, bounds, stream_init_pts, ax, do_try, streamplot_kwargs)
+    _plot_streams(
+        F, bounds, stream_init_pts, ax, do_try, vector_field, streamplot_kwargs
+    )
 
 
 def evaluate_F_v_x0(V, F, nbins, delta=1):
@@ -556,7 +562,7 @@ def compute_cdf(x):
     return x.value_counts().sort_index().cumsum() / x.size
 
 
-def _plot_streams(F, bounds, init_pts, ax, do_try, streamplot_kwargs):
+def _plot_streams(F, bounds, init_pts, ax, do_try, draw_vfield, streamplot_kwargs):
     xmin, xmax, vmin, vmax, nbins = bounds
 
     # make stremplot for F(x, v)
@@ -576,8 +582,18 @@ def _plot_streams(F, bounds, init_pts, ax, do_try, streamplot_kwargs):
             except ValueError:
                 continue
 
-    ax.quiver(
-        X, Y, Y, F, F, angles="xy", scale_units="xy", scale=80, width=0.01, cmap="jet"
-    )
+    if draw_vfield:
+        ax.quiver(
+            X,
+            Y,
+            Y,
+            F,
+            F,
+            angles="xy",
+            scale_units="xy",
+            scale=80,
+            width=0.01,
+            cmap="jet",
+        )
 
     ax.set_aspect("auto")
