@@ -137,6 +137,9 @@ class Simulator:
         # unpack
         N_mesh, L_box = simbox.N_mesh, simbox.L_box
 
+        # initialize cells
+        cell = Cell(cell_config, simbox, cell_rng_seed)
+
         # define base substrate
         sub_config = simbox.sub_config
         xi = sub_config["xi"]
@@ -148,11 +151,11 @@ class Simulator:
             chi = sub.two_state_sub(square_width=l, bridge_width=17, delta_centers=d)
         elif kind == "rectangular":
             chi = sub.rectangular()
+        elif kind == "infinite":
+            chi = sub.infinite()
+            cell.pol_model_kwargs["perturbation"] = 1
         else:
             raise ValueError(f"{kind} for substrate is not understood.")
-
-        # initialize cells
-        cell = Cell(cell_config, simbox, cell_rng_seed)
 
         return cell, chi
 

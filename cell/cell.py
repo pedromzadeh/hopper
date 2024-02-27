@@ -182,13 +182,21 @@ class Cell:
             x2 = self.simbox.L_box / 2 + d
             return [self.rng.uniform(x1, x2), 25]
 
+        def _infinite_init():
+            _min = 10
+            _max = self.simbox.L_box - 10
+            return self.rng.uniform(_min, _max, size=2)
+
         # config is in microns -->
         # / 6 for PF units; / 2 for symmetry
         d = self.simbox.sub_config["sub_sep"] / (2 * 6)
         kind = self.simbox.sub_config["kind"]
-        self.center = (
-            _two_state_init(d) if kind == "two-state" else _rectangular_init(d)
-        )
+        if kind == "infinite":
+            self.center = _infinite_init()
+        elif kind == "two-state":
+            self.center = _two_state_init(d)
+        else:
+            self.center = _rectangular_init(d)
 
     def _init_mvg_generator(self):
         from polarity.mvgaussian import MVGaussian

@@ -66,6 +66,10 @@ class Substrate:
     def __str__(self):
         return "\t" + " + You are currently using the {} substrate.".format(self.type)
 
+    def infinite(self):
+        """A 2D free micropattern"""
+        return np.zeros(shape=(self.N_mesh, self.N_mesh))
+
     def rectangular(self, width=38, length=111):
         # useful variables
         N_mesh = self.N_mesh
