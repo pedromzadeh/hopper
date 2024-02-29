@@ -4,7 +4,7 @@
 #SBATCH --ntasks-per-node=48
 #SBATCH --mail-type=end
 #SBATCH --mail-user=zadeh@jhu.edu
-#SBATCH --time=3-0:00:00
-#SBATCH -o ./_outfiles/job_%A_gid_%a.out
+#SBATCH --time=1:00:00
+#SBATCH -o .outfiles/job_%A_gid_%a.out
 
-python3.10 parallel_runs.py $SLURM_ARRAY_TASK_ID 50
+python3.10 bootstrap_maps.py $SLURM_ARRAY_TASK_ID

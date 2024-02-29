@@ -6,23 +6,28 @@ import pickle
 import os
 
 
-def process_gid(gid, run_id, min_pts=2):
-    data_root = "/mnt/c/Users/pedro/OneDrive - Johns Hopkins/Documents/Research/hopper/_server/sim_data/defaults"
+def process_gid(gid, run_id, b, min_pts=2):
+    dt = 3
+    bdt = 3
+
+    if gid == 110:
+        dt = 4
+        bdt = 2
 
     nbins = 32
     xva_df = get_xva_df(
         apply_time_filter(
             bootstrap(
                 read_fulltake(
-                    os.path.join(data_root, f"parquets/fulltake_gid{gid}.parquet"),
+                    f"parquets/fulltake_gid{gid}.parquet",
                     scale_position=True,
                 ),
             ),
-            dt=3,
-            base_rate=3,
+            dt=dt,
+            base_rate=bdt,
         ),
         nbins,
-        yfile=os.path.join(data_root, f"configs/grid_id{gid}/simbox.yaml"),
+        yfile=f"configs/grid_id{gid}/simbox.yaml",
     )
 
     bounds, F, _ = compute_F_sigma(xva_df, nbins=nbins, min_pts=min_pts)
@@ -46,20 +51,20 @@ def process_gid(gid, run_id, min_pts=2):
             "labels": labels,
             "end_pts": np.array(end_pts),
         },
-        open(f"bootstrapped_maps/map_{gid}_{run_id}.pkl", "wb"),
+        open(f"bootstrapped_maps/map_{gid}_{run_id+48*b}.pkl", "wb"),
     )
 
 
 if __name__ == "__main__":
-    n_batches = 1
-    n_workers = 2
+    n_batches = 4
+    n_workers = 48
     grid_id = int(sys.argv[1])
 
     for batch_id in range(n_batches):
         processes = [
             Process(
                 target=process_gid,
-                args=[grid_id, k],
+                args=[grid_id, k, batch_id],
             )
             for k in range(n_workers)
         ]
