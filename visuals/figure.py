@@ -102,7 +102,10 @@ class Figure:
         if zoom_in:
             plt.xlim([15, 35])
             plt.ylim([15, 35])
-        # plt.axis("off")
+            plt.axis("off")
+        else:
+            plt.xlim([0, 50])
+            plt.ylim([0, 50])
 
         if path is not None:
             plt.savefig(path)

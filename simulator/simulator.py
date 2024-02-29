@@ -90,6 +90,7 @@ class Simulator:
                     cell,
                     chi,
                     dpi=300,
+                    zoom_in=not (simbox.sub_config["kind"] == "infinite"),
                     path=os.path.join(paths["figures"], f"img_{n}.png"),
                 )
 
