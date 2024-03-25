@@ -73,4 +73,6 @@ if __name__ == "__main__":
     # args = [108, 110]  # min_pts = 1; dt = 4, base_rate = 2
     args = [108, 110]  # not anymore
     args = [149, 150]
+    args = [151]
+    args = [101]
     pool.map(process_gid, args)
