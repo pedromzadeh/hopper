@@ -75,4 +75,5 @@ if __name__ == "__main__":
     args = [149, 150]
     args = [151]
     args = [101]
+    args = [12]
     pool.map(process_gid, args)
