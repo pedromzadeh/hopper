@@ -80,7 +80,7 @@ class Figure:
         if zoom_in:
             ax.set_xlim([15, 35])
             ax.set_ylim([15, 35])
-            ax.set_axis("off")
+            ax.axis("off")
         else:
             ax.set_xlim([0, 50])
             ax.set_ylim([0, 50])
