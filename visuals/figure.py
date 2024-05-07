@@ -1,70 +1,47 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FuncFormatter
+from matplotlib.ticker import FormatStrFormatter
+from matplotlib.transforms import Bbox
+from mpl_toolkits.axes_grid1 import make_axes_locatable, axes_size
+
+
+class RemainderFixed(axes_size.Scaled):
+    def __init__(self, xsizes, ysizes, divider):
+        self.xsizes = xsizes
+        self.ysizes = ysizes
+        self.div = divider
+
+    def get_size(self, renderer):
+        xrel, xabs = axes_size.AddList(self.xsizes).get_size(renderer)
+        yrel, yabs = axes_size.AddList(self.ysizes).get_size(renderer)
+        bb = Bbox.from_bounds(*self.div.get_position()).transformed(
+            self.div._fig.transFigure
+        )
+        w = bb.width / self.div._fig.dpi - xabs
+        h = bb.height / self.div._fig.dpi - yabs
+        return 0, min([w, h])
+
+
+def make_square_axes_with_colorbar(ax, size=0.1, pad=0.1):
+    """Make an axes square, add a colorbar axes next to it,
+    Parameters: size: Size of colorbar axes in inches
+                pad : Padding between axes and cbar in inches
+    Returns: colorbar axes
+    """
+    divider = make_axes_locatable(ax)
+    margin_size = axes_size.Fixed(size)
+    pad_size = axes_size.Fixed(pad)
+    xsizes = [pad_size, margin_size]
+    yhax = divider.append_axes("right", size=margin_size, pad=pad_size)
+    divider.set_horizontal([RemainderFixed(xsizes, [], divider)] + xsizes)
+    divider.set_vertical([RemainderFixed(xsizes, [], divider)])
+    return yhax
 
 
 class Figure:
-    def __init__(self):
-        pass
 
     @classmethod
-    def view_simbox(cls, cell, chi, path):
-        L = cell.simbox.L_box
-        plt.imshow(
-            cell.phi, cmap="Greys", origin="lower", extent=[0, L, 0, L], alpha=0.5
-        )
-
-        plt.contour(cell.phi, levels=[0.5], extent=[0, L, 0, L], colors="black")
-
-        xcm, ycm = cell.cm[1]
-        px, py = [np.cos(cell.theta), np.sin(cell.theta)]
-        vx, vy = cell.v_cm
-        rx, ry = cell.r_CR
-
-        plt.quiver(
-            xcm,
-            ycm,
-            px,
-            py,
-            angles="xy",
-            scale_units="xy",
-            color="blue",
-            label="Polarity",
-            alpha=0.7,
-        )
-
-        # plt.quiver(
-        #     xcm,
-        #     ycm,
-        #     vx,
-        #     vy,
-        #     angles="xy",
-        #     scale_units="xy",
-        #     color="red",
-        #     label="CM Velocity",
-        #     alpha=0.7,
-        # )
-
-        if rx != 0 and ry != 0:
-            plt.quiver(
-                xcm,
-                ycm,
-                rx,
-                ry,
-                angles="xy",
-                scale_units="xy",
-                color="black",
-                label=r"$r_{{CR}}$",
-                alpha=0.7,
-            )
-
-        plt.contour(chi, levels=[0.5], extent=[0, L, 0, L])
-        plt.axis("equal")
-        plt.savefig(path)
-        plt.close()
-
-    @classmethod
-    def view_pol_field(cls, cell, chi, dpi, zoom_in=True, path=None):
+    def view_pol_field(cls, cell, chi, dpi, cbar=True, zoom_in=True, path=None):
         phi = cell.phi
         p_field = cell.p_field
         L_box = cell.simbox.L_box
@@ -73,16 +50,17 @@ class Figure:
         i, j = np.where(phi >= 0.5)
         p_field_masked[i, j] = p_field[i, j]
 
-        plt.figure(figsize=(3, 3), dpi=dpi)
-        plt.imshow(
+        fig, ax = plt.subplots(figsize=(3, 3), dpi=dpi)
+        img = plt.imshow(
             p_field_masked, extent=[0, L_box, 0, L_box], origin="lower", cmap="coolwarm"
         )
-        # cbar = plt.colorbar()
-        # cbar = plt.colorbar(
-        #     format=FuncFormatter(lambda x, pos: "{:.2f}".format(x)), pad=0.2, shrink=0.8
-        # )
-        # cbar.set_label(r"$\mathbb{P}\equiv \phi \rho$")
-        plt.contour(
+        cax = make_square_axes_with_colorbar(ax, size=0.15, pad=0.1)
+
+        if cbar:
+            colorbar = fig.colorbar(img, cax=cax, format=FormatStrFormatter("%.2f"))
+            colorbar.set_label("Polarization field " + r"$\mathbb{P}$")
+
+        ax.contour(
             phi,
             levels=[0.5],
             extent=[0, L_box, 0, L_box],
@@ -90,7 +68,7 @@ class Figure:
             linewidths=[2],
             colors=["black"],
         )
-        plt.contour(
+        ax.contour(
             chi,
             levels=[0.5],
             extent=[0, L_box, 0, L_box],
@@ -100,12 +78,12 @@ class Figure:
         )
 
         if zoom_in:
-            plt.xlim([15, 35])
-            plt.ylim([15, 35])
-            plt.axis("off")
+            ax.set_xlim([15, 35])
+            ax.set_ylim([15, 35])
+            ax.set_axis("off")
         else:
-            plt.xlim([0, 50])
-            plt.ylim([0, 50])
+            ax.set_xlim([0, 50])
+            ax.set_ylim([0, 50])
 
         if path is not None:
             plt.savefig(path)
