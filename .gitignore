@@ -1,6 +1,7 @@
 # User-defined
 processing/paper_plots
 processing/maps
+processing/grid_id*
 
 *.mp4
 output/
