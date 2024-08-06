@@ -171,32 +171,13 @@ class Cell:
         return 1 / 2 + 1 / 2 * np.tanh(-(r - R) / epsilon)
 
     def _init_center(self):
-        def _two_state_init(d):
-            x1 = self.simbox.L_box / 2 - d
-            x2 = self.simbox.L_box / 2 + d
-            centers = [[x1, 25], [x2, 25]]
-            return centers[self.rng.integers(0, 2)]
-
-        def _rectangular_init(d):
-            x1 = self.simbox.L_box / 2 - d
-            x2 = self.simbox.L_box / 2 + d
-            return [self.rng.uniform(x1, x2), 25]
-
-        def _infinite_init():
-            _min = 10
-            _max = self.simbox.L_box - 10
-            return self.rng.uniform(_min, _max, size=2)
-
-        # config is in microns -->
-        # / 6 for PF units; / 2 for symmetry
-        d = self.simbox.sub_config["sub_sep"] / (2 * 6)
-        kind = self.simbox.sub_config["kind"]
-        if kind == "infinite":
-            self.center = _infinite_init()
-        elif kind == "two-state":
-            self.center = _two_state_init(d)
-        else:
-            self.center = _rectangular_init(d)
+        bridge_length = self.simbox.sub_config["bridge_dim"][0]
+        basin_dims = np.array(self.simbox.sub_config["basin_dims"])
+        delta = (bridge_length + basin_dims[:, 0].sum() * 0.5) / (2 * 6)
+        x1 = self.simbox.L_box / 2 - delta
+        x2 = self.simbox.L_box / 2 + delta
+        centers = [[x1, 25], [x2, 25]]
+        self.center = centers[self.rng.integers(0, 2)]
 
     def _init_mvg_generator(self):
         from polarity.mvgaussian import MVGaussian

@@ -254,3 +254,72 @@ class Substrate:
         mp -= 1
         mp = np.where(mp < 0, 0, mp)
         return mp
+
+    def mixed_two_state_sub(self, basin_dims, bridge_dims):
+        """
+        Returns a two-state (dumbell-shaped) micropattern, with inside = 0.
+
+        Parameters
+        ----------
+        basin_dims : np.ndarray of shape (2, 2)
+            Specifies the (length, width) dimensions of each basin (left: 0, right: 1) in microns
+        bridge_dims : list
+            Specifies the length and width of the bridge in microns
+
+        Returns
+        -------
+        np.ndarray of shape (N_mesh, N_mesh)
+            The micropattern.
+        """
+        # useful variables
+        N_mesh = self.N_mesh
+        L_box = self.L_box
+        xi = self.xi
+        bridge_length, bridge_width = bridge_dims
+        basin_dims = np.array(basin_dims)
+        
+        # lattice points
+        x, y = np.meshgrid(np.linspace(0, L_box, N_mesh), np.linspace(0, L_box, N_mesh))
+
+        # index of the two squares, used for symmetric positioning
+        delta = (bridge_length + basin_dims[:, 0].sum() * 0.5) / (
+            2 * 6
+        )  # in PF.L & halved
+        L_bridge = bridge_width / (2 * 6)  # in PF._bridge & halved
+
+        # build the squares
+        squares = None
+        for k in range(2):
+            if k == 0:
+                center = L_box / 2 - delta
+            else:
+                center = L_box / 2 + delta
+
+            xL = center - basin_dims[k][0] / (2 * 6)  # in PF.L & halved
+            xR = center + basin_dims[k][0] / (2 * 6)  # in PF.L & halved
+            yB = L_box / 2 - basin_dims[k][1] / (2 * 6)  # in PF.L & halved
+            yT = L_box / 2 + basin_dims[k][1] / (2 * 6)  # in PF.L & halved
+            chi_y = 0.5 * ((1 - np.tanh((y - yB) / xi)) + (1 + np.tanh((y - yT) / xi)))
+            chi_x = 0.5 * ((1 - np.tanh((x - xL) / xi)) + (1 + np.tanh((x - xR) / xi)))
+            chi = chi_x + chi_y
+            chi = np.where(chi > 1, 1, chi)
+
+            if squares is None:
+                squares = chi
+            else:
+                squares += chi
+
+        # build the bridge
+        xL = L_box / 2 - delta
+        xR = L_box / 2 + delta
+        yB, yT = L_box / 2 - L_bridge, L_box / 2 + L_bridge
+        chi_y = 0.5 * ((1 - np.tanh((y - yB) / xi)) + (1 + np.tanh((y - yT) / xi)))
+        chi_x = 0.5 * ((1 - np.tanh((x - xL) / xi)) + (1 + np.tanh((x - xR) / xi)))
+        chi = chi_x + chi_y
+        chi = np.where(chi > 1, 1, chi)
+
+        # put squares and bridge together
+        mp = (squares - 1) + chi
+        mp -= 1
+        mp = np.where(mp < 0, 0, mp)
+        return mp

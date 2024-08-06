@@ -146,15 +146,11 @@ class Simulator:
         xi = sub_config["xi"]
         kind = sub_config["kind"]
         sub = Substrate(N_mesh, L_box, xi)
-        l = 38 + sub_config["buffer"]
-        d = sub_config["sub_sep"]
-        if kind == "two-state":
-            chi = sub.two_state_sub(square_width=l, bridge_width=17, delta_centers=d)
-        elif kind == "rectangular":
-            chi = sub.rectangular()
-        elif kind == "infinite":
-            chi = sub.infinite()
-            cell.pol_model_kwargs["perturbation"] = 1
+
+        if kind == "mixed_two-state":
+            chi = sub.mixed_two_state_sub(
+                sub_config["basin_dims"], sub_config["bridge_dim"]
+            )
         else:
             raise ValueError(f"{kind} for substrate is not understood.")
 
