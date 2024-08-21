@@ -8,6 +8,8 @@ def build(dimensions, config_id):
     yaml_obj.indent(sequence=4, offset=2)
     simbox_yaml = yaml_obj.load(open("configs/base_simbox.yaml"))
 
+    simbox_yaml["simbox_view_freq"] = int(1e10)
+
     for key, value in dimensions.items():
         simbox_yaml["substrate"][key] = value
 
@@ -18,16 +20,20 @@ def build(dimensions, config_id):
 
 if __name__ == "__main__":
     dims = [
+        # square basins
+        # 38: default
+        # 28 -> 30
+        # 32 -> 34
         [[38, 38], [38, 38]],
-        [[38, 38], [28, 28]],
-        [[38, 38], [32, 32]],
-        [[42, 42], [28, 28]],
-        [[42, 42], [32, 32]],
-        # rectangle basins
-        [[25, 48], [25, 48]],
-        [[25, 48], [48, 25]],
-        [[48, 25], [25, 48]],
+        [[38, 38], [30, 30]],
+        [[38, 38], [34, 34]],
+        [[42, 42], [30, 30]],
+        [[42, 42], [34, 34]],
+        # rectangle basins, scaled up by a factor of 1.2
+        [[30, 58], [30, 58]],
+        [[30, 58], [58, 30]],
+        # [[58, 30], [30, 58]],
     ]
 
     for id, basin_dims in enumerate(dims):
-        build({"basin_dims": basin_dims, "bridge_dim": [16, 10]}, id)
+        build({"basin_dims": basin_dims, "bridge_dim": [35, 17]}, id)
