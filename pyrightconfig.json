@@ -1,0 +1,7 @@
+{
+    "exclude": [
+        "_notebooks/",
+        "output/",
+        "_server/sim_data/"
+    ]
+}
