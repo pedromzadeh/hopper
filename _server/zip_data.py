@@ -19,17 +19,16 @@ def write_parquet(gid, save_path):
 
 
 if __name__ == "__main__":
-    save_path = "sim_data/rectangular_only"
+    save_path = "sim_data/diff_geoms/"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
-    n_gid = 32
     processes = [
         multiprocessing.Process(
             target=write_parquet,
             args=[gid, save_path],
         )
-        for gid in range(16, n_gid)
+        for gid in range(8)
     ]
 
     # begin each process
