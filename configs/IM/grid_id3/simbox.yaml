@@ -1,0 +1,18 @@
+L_box: 50
+N: 240000
+N_mesh: 200
+dt: 0.00075
+simbox_view_freq: 10000000000
+stat_collection_freq: 500
+substrate:
+  buffer: 0
+  kind: mixed_two-state
+  basin_dims:
+    -   - 42
+        - 42
+    -   - 30
+        - 30
+  bridge_dim:
+    - 35
+    - 17
+  xi: 0.2
