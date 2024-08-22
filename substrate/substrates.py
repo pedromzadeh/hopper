@@ -453,3 +453,50 @@ class Substrate:
         mp = np.where(mp < 0.1, 0, mp)
         mp = np.where(mp > 1, 1, mp)
         return mp
+
+    def tri_ratchets(self):
+        """
+        Build a static, simple triangular ratchet substrate.
+
+        Returns
+        -------
+        np.ndarray
+            The substrate
+        """
+        # useful variables
+        N_mesh = 200
+        L_box = 50
+        xi = 0.2
+
+        mp = None
+
+        # lattice points
+        x, y = np.meshgrid(np.linspace(0, L_box, N_mesh), np.linspace(0, L_box, N_mesh))
+
+        for k in range(10):
+            # triangle
+            f = 0.71
+            x0 = 23
+            side_1 = 0.5 * (1 - np.tanh((f * (x + x0) - y) / (20 * xi)))
+            side_2 = 0.5 * (1 - np.tanh((y + (f * (x + x0) - 50)) / (20 * xi)))
+            triangle = side_1 + 2 * side_2
+            triangle = np.where(triangle > 1 + 1e-4, 1, triangle)
+
+            scaled_triangle = zoom(triangle, zoom=0.23, order=0)
+            final = np.ones(triangle.shape)
+            q = scaled_triangle.shape[0] // 2
+            y0 = N_mesh // 2
+            x0 = N_mesh // 2 + 13
+            final[y0 - q : y0 + q, x0 - q : x0 + q] = scaled_triangle
+
+            if k == 0:
+                mp = final
+
+            else:
+                # q = 22 for narrow
+                # q = 20 for wide
+                q = 22
+                mp += np.roll(final, -k * q, axis=1)
+                mp -= 1
+        mp = np.where(mp < 0.4, 0, mp)
+        return mp

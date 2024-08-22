@@ -171,13 +171,20 @@ class Cell:
         return 1 / 2 + 1 / 2 * np.tanh(-(r - R) / epsilon)
 
     def _init_center(self):
-        bridge_length = self.simbox.sub_config["bridge_dim"][0]
-        basin_dims = np.array(self.simbox.sub_config["basin_dims"])
-        delta = (bridge_length + basin_dims[:, 0].sum() * 0.5) / (2 * 6)
-        x1 = self.simbox.L_box / 2 - delta
-        x2 = self.simbox.L_box / 2 + delta
-        centers = [[x1, 25], [x2, 25]]
-        self.center = centers[self.rng.integers(0, 2)]
+        if self.simbox.sub_config["kind"] == "tri_ratchet":
+            xs = [185.61340206, 110.61340206, 149.3814433]
+            ys = [149.8] * len(xs)
+            centers = np.vstack([xs, ys]).T / (4 * 1.5)
+            self.center = centers[self.rng.integers(0, len(centers))]
+
+        else:
+            bridge_length = self.simbox.sub_config["bridge_dim"][0]
+            basin_dims = np.array(self.simbox.sub_config["basin_dims"])
+            delta = (bridge_length + basin_dims[:, 0].sum() * 0.5) / (2 * 6)
+            x1 = self.simbox.L_box / 2 - delta
+            x2 = self.simbox.L_box / 2 + delta
+            centers = [[x1, 25], [x2, 25]]
+            self.center = centers[self.rng.integers(0, 2)]
 
     def _init_mvg_generator(self):
         from polarity.mvgaussian import MVGaussian

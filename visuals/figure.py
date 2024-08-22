@@ -65,7 +65,7 @@ class Figure:
             levels=[0.5],
             extent=[0, L_box, 0, L_box],
             origin="lower",
-            linewidths=[2],
+            linewidths=[1],
             colors=["black"],
         )
         ax.contour(
@@ -73,7 +73,7 @@ class Figure:
             levels=[0.5],
             extent=[0, L_box, 0, L_box],
             origin="lower",
-            linewidths=[3],
+            linewidths=[1],
             colors=["black"],
         )
 
@@ -83,7 +83,8 @@ class Figure:
             ax.axis("off")
         else:
             ax.set_xlim([0, 50])
-            ax.set_ylim([0, 50])
+            # ax.set_ylim([0, 50])
+            ax.set_ylim([13, 37])
 
         if path is not None:
             plt.savefig(path)

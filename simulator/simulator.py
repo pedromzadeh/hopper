@@ -90,7 +90,10 @@ class Simulator:
                     cell,
                     chi,
                     dpi=300,
-                    zoom_in=not (simbox.sub_config["kind"] == "infinite"),
+                    zoom_in=not (
+                        (simbox.sub_config["kind"] == "infinite")
+                        or (simbox.sub_config["kind"] == "tri_ratchet")
+                    ),
                     path=os.path.join(paths["figures"], f"img_{n}.png"),
                 )
 
@@ -155,6 +158,8 @@ class Simulator:
             chi = sub.sq_rhom_two_state_sub()
         elif kind == "square-triangle":
             chi = sub.sq_tri_two_state_sub()
+        elif kind == "tri_ratchet":
+            chi = sub.tri_ratchets()
         else:
             raise ValueError(f"{kind} for substrate is not understood.")
 
