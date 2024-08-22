@@ -431,7 +431,7 @@ class Substrate:
             chi = np.where(chi > 1, 1, chi)
             if k == 1:
                 chi = rotate(chi, angle=45, reshape=False)
-                chi = np.roll(chi, 6, axis=1)
+                chi = np.roll(chi, 7, axis=1)
                 chi = np.roll(chi, 17, axis=0)
             if squares is None:
                 squares = chi
@@ -450,5 +450,6 @@ class Substrate:
         # put squares and bridge together
         mp = (squares - 1) + chi
         mp -= 1
-        mp = np.where(mp < 0, 0, mp)
+        mp = np.where(mp < 0.1, 0, mp)
+        mp = np.where(mp > 1, 1, mp)
         return mp
