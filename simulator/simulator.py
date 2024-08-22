@@ -151,6 +151,10 @@ class Simulator:
             chi = sub.mixed_two_state_sub(
                 sub_config["basin_dims"], sub_config["bridge_dim"]
             )
+        elif kind == "square-rhomboid":
+            chi = sub.sq_rhom_two_state_sub()
+        elif kind == "square-triangle":
+            chi = sub.sq_tri_two_state_sub()
         else:
             raise ValueError(f"{kind} for substrate is not understood.")
 
