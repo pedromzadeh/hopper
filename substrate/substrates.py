@@ -379,7 +379,7 @@ class Substrate:
         bridge = np.where(chi > 1, 1, chi)
 
         # put squares and bridge together
-        scaled_triangle = zoom(triangle, zoom=0.2, order=0)
+        scaled_triangle = zoom(triangle, zoom=0.23, order=0)
         final = np.ones(square.shape)
         q = scaled_triangle.shape[0] // 2
         y0 = N_mesh // 2
