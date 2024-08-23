@@ -45,6 +45,8 @@ def simbox_configs(snapshots, L_two_state=73):
 def cell_configs(pol_type, grid_axes_kwargs):
     # static cell parameters
     cell_kwargs = {
+        "gamma": [0.8],
+        "R_eq": [3.0],
         "N_wetting": [500],
         "R_init": [2.75],
         "eta": [0.5],
@@ -64,12 +66,12 @@ def cell_configs(pol_type, grid_axes_kwargs):
 
     pol_model_kwargs = {
         "mu_mvg": [7.5],
-        "tau": [0.5],
+        "sigma_mvg": [37.5],
         "tau_x": [0.02],
         "tau_ten": [1.0],
         "interpolate_cntrs": [False],
         "R_ten_factor": [1.5],
-        "perturbation": [1],
+        "perturbation": [0],
     }
 
     return list(ParameterGrid(grid_axes_kwargs | cell_kwargs | pol_model_kwargs))
@@ -80,16 +82,23 @@ if __name__ == "__main__":
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"{pol_type}")
 
     # grid search over...
-    gammas = np.linspace(0.8, 1.8, 2)
-    mag_stds = np.linspace(22.5, 37.5, 2)
-    add_rates = np.linspace(0.0045, 0.009, 2)  # x 8 x 60 --> seconds
-    R_eqs = np.linspace(2.5, 3.0, 2)
+    # gammas = np.linspace(0.8, 1.8, 2)
+    # mag_stds = np.linspace(22.5, 37.5, 2)
+    # add_rates = np.linspace(0.0045, 0.009, 2)  # x 8 x 60 --> seconds
+    # R_eqs = np.linspace(2.5, 3.0, 2)
 
+    # grid_axes_kwargs = {
+    #     "gamma": list(map(float, gammas)),
+    #     "sigma_mvg": list(map(float, mag_stds)),
+    #     "tau_mvg": list(map(float, add_rates)),
+    #     "R_eq": list(map(float, R_eqs)),
+    # }
+
+    add_rates = np.round(np.array([1.0, 2.2, 3.6, 5.1, 7.0]) / (8 * 60), 5)
+    decay_rates = np.round(np.array([1, 2, 4, 6, 8]) / (8.0), 5)
     grid_axes_kwargs = {
-        "gamma": list(map(float, gammas)),
-        "sigma_mvg": list(map(float, mag_stds)),
         "tau_mvg": list(map(float, add_rates)),
-        "R_eq": list(map(float, R_eqs)),
+        "tau": list(map(float, decay_rates)),
     }
     grid = cell_configs(pol_type, grid_axes_kwargs)
     mps = simbox_configs(sys.argv[1])

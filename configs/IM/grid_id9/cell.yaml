@@ -12,8 +12,8 @@ mu_mvg: 7.5
 nu: 0
 perturbation: 0
 polarity_mode: IM
-sigma_mvg: 52.5
-tau: 0.5
-tau_mvg: 0.0045
+sigma_mvg: 37.5
+tau: 0.25
+tau_mvg: 0.01458
 tau_ten: 1.0
 tau_x: 0.02
