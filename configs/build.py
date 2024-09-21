@@ -65,10 +65,10 @@ def cell_configs(pol_type, grid_axes_kwargs):
     #       3) P_filopodia ~ Uniform
 
     pol_model_kwargs = {
-        "mu_mvg": [7.5],
         "sigma_mvg": [37.5],
         "tau_x": [0.02],
         "tau_ten": [1.0],
+        "tau": [0.5],
         "interpolate_cntrs": [False],
         "R_ten_factor": [1.5],
         "perturbation": [0],
@@ -95,16 +95,17 @@ if __name__ == "__main__":
     # }
 
     add_rates = np.round(np.array([1.0, 2.2, 3.6, 5.1, 7.0]) / (8 * 60), 5)
-    decay_rates = np.round(np.array([1, 2, 4, 6, 8]) / (8.0), 5)
+    patch_means = np.array([2, 4, 8, 10, 12])
     grid_axes_kwargs = {
         "tau_mvg": list(map(float, add_rates)),
-        "tau": list(map(float, decay_rates)),
+        "mu_mvg": list(map(float, patch_means)),
     }
     grid = cell_configs(pol_type, grid_axes_kwargs)
     mps = simbox_configs(sys.argv[1])
 
     print(f"Writing {2*len(grid)} configuration files...")
-    for k, sub_type in enumerate(["two_state", "single_state"]):
+    # for k, sub_type in enumerate(["two_state", "single_state"]):
+    for k, sub_type in enumerate(["two_state"]):
         for id, params in enumerate(grid):
             if k == 1:
                 id += len(grid)

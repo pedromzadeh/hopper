@@ -8,12 +8,12 @@ gamma: 0.8
 id: 0
 interpolate_cntrs: false
 lam: 0.8
-mu_mvg: 7.5
+mu_mvg: 2.0
 nu: 0
 perturbation: 0
 polarity_mode: IM
 sigma_mvg: 37.5
-tau: 0.125
+tau: 0.5
 tau_mvg: 0.00458
 tau_ten: 1.0
 tau_x: 0.02
