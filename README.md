@@ -76,6 +76,14 @@ hopper/
                └─── simbox.yaml  
 ```
 
+You can leverage the existing files in `configs/IM` to generate a few core results shown in our paper [1]:
+- `grid_id2`: Figure 3(c) -- default cell with smaller radius in two-state geometry, which exhibits bistability.
+- `grid_id10`: Figure 3(a) -- default cell in two-state geometry, which exhibits limit cycles.
+- `grid_id12`: Figure 8 -- default cell with $\tau_\chi \to \infty$.
+- `grid_id26`: Figure 3(b) -- default cell in rectangular geometry, which exhibits stationary behavior.
+- `grid_id151` Default cell moving in a free 2D environment
+The remaining configuration files in that directory are for other perturbations, such as those seen in Figs. 4, 6, and S4. Consult `cell.yaml` to see the cell specifications, and `simbox.yaml` to see the confining geometry.
+
 # Running a Simulation
 As an end user, you really need to only interact with the `_server/single_run.py` file, which executes one full simulation for a particular cell.
 
