@@ -84,9 +84,9 @@ Simply run
 cd _server
 python single_run.py arg   # arg: integer representing the grid ID housed in /configs/IM
 ```
-For example, `python single_run.py 0` will run a full-scale simulation for the cell defined according to `configs/Im/grid_id0/*`. Simulations should finish in about 15-20 mintues.
+For example, `python single_run.py 2` will run a full-scale simulation for the cell defined according to `configs/IM/grid_id2/*`. Simulations should finish in about 15-20 mintues.
 
-The results are stored in `output/IM/grid_id0/run_0/results.csv`, and the following important values are recorded:
+The results are stored in `output/IM/grid_id2/run_2/results.csv`, and the following important values are recorded:
 
 1. the position of the cell $(x, y)$, 
 2. time, in hours, of the measurement $t$.
