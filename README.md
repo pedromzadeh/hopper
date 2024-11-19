@@ -100,7 +100,7 @@ The results are stored in `output/IM/grid_id2/run_2/results.csv`, and the follow
 2. time, in hours, of the measurement $t$.
 
 # Processing a Simulation Run
-The `analysis` package defines all the post-simulation processing we need. It acts on the raw position trajectory to compute velocity and acceleration time series. It then creates an acceleration field in the xv- phase-space. We compute the acceleration footprint by averaging this field over thousands of simulations. Play with the notebook `notebooks/ray_tracing.ipynb` to see the various stages of post-simulation processing.
+The `analysis` package defines all the post-simulation processing we need. It acts on the raw position trajectory to compute velocity and acceleration time series. It then creates an acceleration field in the xv- phase-space. We compute the acceleration footprint by averaging this field over thousands of simulations. Play with the notebooks `processing/ray_tracing.ipynb` and `processing/streams.ipynb` to generate paper figures!
 
 > [!WARNING] 
 > You must run the Jupyter notebook in the `conda` environment we created above since it needs the `analysis` package. See this [stackoverflow thread](https://stackoverflow.com/questions/39604271/conda-environments-not-showing-up-in-jupyter-notebook) for further instructions.
