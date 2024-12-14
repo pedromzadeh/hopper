@@ -102,6 +102,8 @@ The results are stored in `output/IM/grid_id2/run_2/results.csv`, and the follow
 # Processing a Simulation Run
 The `analysis` package defines all the post-simulation processing we need. It acts on the raw position trajectory to compute velocity and acceleration time series. It then creates an acceleration field in the xv- phase-space. We compute the acceleration footprint by averaging this field over thousands of simulations. Play with the notebook `processing/streams.ipynb` to generate paper figures!
 
+To generate Fig. 9 in the paper, you can run the `processing/response.ipynb` notebook. This requires you to first checkout the `diff_geoms` branch, which you do by issuing `git checkout diff_geoms`.
+
 > [!WARNING] 
 > You must run the Jupyter notebook in the `conda` environment we created above since it needs the `analysis` package. See this [stackoverflow thread](https://stackoverflow.com/questions/39604271/conda-environments-not-showing-up-in-jupyter-notebook) for further instructions.
 
