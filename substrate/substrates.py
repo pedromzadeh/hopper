@@ -1,5 +1,5 @@
 import numpy as np
-
+from scipy.ndimage import rotate, zoom
 
 class Substrate:
     """
@@ -253,4 +253,249 @@ class Substrate:
         mp = (squares - 1) + chi
         mp -= 1
         mp = np.where(mp < 0, 0, mp)
+        return mp
+
+    def mixed_two_state_sub(self, basin_dims, bridge_dims):
+        """
+        Returns a two-state (dumbell-shaped) micropattern, with inside = 0.
+
+        Parameters
+        ----------
+        basin_dims : np.ndarray of shape (2, 2)
+            Specifies the (length, width) dimensions of each basin (left: 0, right: 1) in microns
+        bridge_dims : list
+            Specifies the length and width of the bridge in microns
+
+        Returns
+        -------
+        np.ndarray of shape (N_mesh, N_mesh)
+            The micropattern.
+        """
+        # useful variables
+        N_mesh = self.N_mesh
+        L_box = self.L_box
+        xi = self.xi
+        bridge_length, bridge_width = bridge_dims
+        basin_dims = np.array(basin_dims)
+
+        # lattice points
+        x, y = np.meshgrid(np.linspace(0, L_box, N_mesh), np.linspace(0, L_box, N_mesh))
+
+        # index of the two squares, used for symmetric positioning
+        delta = (bridge_length + basin_dims[:, 0].sum() * 0.5) / (
+            2 * 6
+        )  # in PF.L & halved
+        L_bridge = bridge_width / (2 * 6)  # in PF._bridge & halved
+
+        # build the squares
+        squares = None
+        for k in range(2):
+            if k == 0:
+                center = L_box / 2 - delta
+            else:
+                center = L_box / 2 + delta
+
+            xL = center - basin_dims[k][0] / (2 * 6)  # in PF.L & halved
+            xR = center + basin_dims[k][0] / (2 * 6)  # in PF.L & halved
+            yB = L_box / 2 - basin_dims[k][1] / (2 * 6)  # in PF.L & halved
+            yT = L_box / 2 + basin_dims[k][1] / (2 * 6)  # in PF.L & halved
+            chi_y = 0.5 * ((1 - np.tanh((y - yB) / xi)) + (1 + np.tanh((y - yT) / xi)))
+            chi_x = 0.5 * ((1 - np.tanh((x - xL) / xi)) + (1 + np.tanh((x - xR) / xi)))
+            chi = chi_x + chi_y
+            chi = np.where(chi > 1, 1, chi)
+
+            if squares is None:
+                squares = chi
+            else:
+                squares += chi
+
+        # build the bridge
+        xL = L_box / 2 - delta
+        xR = L_box / 2 + delta
+        yB, yT = L_box / 2 - L_bridge, L_box / 2 + L_bridge
+        chi_y = 0.5 * ((1 - np.tanh((y - yB) / xi)) + (1 + np.tanh((y - yT) / xi)))
+        chi_x = 0.5 * ((1 - np.tanh((x - xL) / xi)) + (1 + np.tanh((x - xR) / xi)))
+        chi = chi_x + chi_y
+        chi = np.where(chi > 1, 1, chi)
+
+        # put squares and bridge together
+        mp = (squares - 1) + chi
+        mp -= 1
+        mp = np.where(mp < 0, 0, mp)
+        return mp
+
+    def sq_tri_two_state_sub(self):
+        """
+        Build a static, simple square-triangle substrate.
+
+        Returns
+        -------
+        np.ndarray
+            The substrate
+        """
+        # useful variables
+        N_mesh = 200
+        L_box = 50
+        xi = 0.2
+        dims = [38, 38]
+
+        # lattice points
+        x, y = np.meshgrid(np.linspace(0, L_box, N_mesh), np.linspace(0, L_box, N_mesh))
+
+        # triangle
+        triangle = np.ones(x.shape)
+        f = 0.71
+        x0 = 23
+        side_1 = 0.5 * (1 - np.tanh((f * (x + x0) - y) / (5 * xi)))
+        side_2 = 0.5 * (1 - np.tanh((y + (f * (x + x0) - 50)) / (5 * xi)))
+        combo = side_1 + 2 * side_2
+        triangle[:, N_mesh // 2 - x0 :] = combo[:, N_mesh // 2 - x0 :]
+        triangle = np.where(triangle > 1 + 1e-4, 1, triangle)
+
+        # index of the two squares, used for symmetric positioning
+        bridge_length = 35
+        bridge_width = 17
+        delta = (bridge_length + dims[0]) / (2 * 6)  # in PF.L & halved
+        L_bridge = bridge_width / (2 * 6)  # in PF._bridge & halved
+        center = L_box / 2 - delta
+
+        xL = center - dims[0] / (2 * 6)  # in PF.L & halved
+        xR = center + dims[0] / (2 * 6)  # in PF.L & halved
+        yB = L_box / 2 - dims[1] / (2 * 6)  # in PF.L & halved
+        yT = L_box / 2 + dims[1] / (2 * 6)  # in PF.L & halved
+        chi_y = 0.5 * ((1 - np.tanh((y - yB) / xi)) + (1 + np.tanh((y - yT) / xi)))
+        chi_x = 0.5 * ((1 - np.tanh((x - xL) / xi)) + (1 + np.tanh((x - xR) / xi)))
+        chi = chi_x + chi_y
+        square = np.where(chi > 1, 1, chi)
+
+        # build the bridge
+        xL = L_box / 2 - delta
+        xR = L_box / 2 + delta
+        yB, yT = L_box / 2 - L_bridge, L_box / 2 + L_bridge
+        chi_y = 0.5 * ((1 - np.tanh((y - yB) / xi)) + (1 + np.tanh((y - yT) / xi)))
+        chi_x = 0.5 * ((1 - np.tanh((x - xL) / xi)) + (1 + np.tanh((x - xR) / xi)))
+        chi = chi_x + chi_y
+        bridge = np.where(chi > 1, 1, chi)
+
+        # put squares and bridge together
+        scaled_triangle = zoom(triangle, zoom=0.23, order=0)
+        final = np.ones(square.shape)
+        q = scaled_triangle.shape[0] // 2
+        y0 = N_mesh // 2
+        x0 = N_mesh // 2 + 13
+        final[y0 - q : y0 + q, x0 - q : x0 + q] = scaled_triangle
+        mp = square + bridge + final
+        mp -= 2
+        mp = np.where(mp < 0, 0, mp)
+        return mp
+
+    def sq_rhom_two_state_sub(self):
+        """
+        Build a static square-rhomboid two-state substrate.
+
+        Returns
+        -------
+        np.ndarray of shape (N_mesh, N_mesh)
+            The micropattern.
+        """
+        # useful variables
+        N_mesh = 200
+        L_box = 50
+        xi = 0.1
+        dims = np.array([[38, 38], [38, 38]])
+
+        # lattice points
+        x, y = np.meshgrid(np.linspace(0, L_box, N_mesh), np.linspace(0, L_box, N_mesh))
+
+        # index of the two squares, used for symmetric positioning
+        bridge_length = 35
+        delta = (bridge_length + dims[:, 0].sum() * 0.5) / (2 * 6)  # in PF.L & halved
+        L_bridge = 17 / (2 * 6)  # in PF._bridge & halved
+
+        # build the squares
+        squares = None
+        for k in range(2):
+            if k == 0:
+                center = L_box / 2 - delta
+            else:
+                center = L_box / 2 + delta
+
+            xL = center - dims[k][0] / (2 * 6)  # in PF.L & halved
+            xR = center + dims[k][0] / (2 * 6)  # in PF.L & halved
+            yB = L_box / 2 - dims[k][1] / (2 * 6)  # in PF.L & halved
+            yT = L_box / 2 + dims[k][1] / (2 * 6)  # in PF.L & halved
+            chi_y = 0.5 * ((1 - np.tanh((y - yB) / xi)) + (1 + np.tanh((y - yT) / xi)))
+            chi_x = 0.5 * ((1 - np.tanh((x - xL) / xi)) + (1 + np.tanh((x - xR) / xi)))
+            chi = chi_x + chi_y
+            chi = np.where(chi > 1, 1, chi)
+            if k == 1:
+                chi = rotate(chi, angle=45, reshape=False)
+                chi = np.roll(chi, 7, axis=1)
+                chi = np.roll(chi, 17, axis=0)
+            if squares is None:
+                squares = chi
+            else:
+                squares += chi
+
+        # build the bridge
+        xL = L_box / 2 - delta
+        xR = L_box / 2 + delta
+        yB, yT = L_box / 2 - L_bridge, L_box / 2 + L_bridge
+        chi_y = 0.5 * ((1 - np.tanh((y - yB) / xi)) + (1 + np.tanh((y - yT) / xi)))
+        chi_x = 0.5 * ((1 - np.tanh((x - xL) / xi)) + (1 + np.tanh((x - xR) / xi)))
+        chi = chi_x + chi_y
+        chi = np.where(chi > 1, 1, chi)
+
+        # put squares and bridge together
+        mp = (squares - 1) + chi
+        mp -= 1
+        mp = np.where(mp < 0.1, 0, mp)
+        mp = np.where(mp > 1, 1, mp)
+        return mp
+
+    def tri_ratchets(self):
+        """
+        Build a static, simple triangular ratchet substrate.
+
+        Returns
+        -------
+        np.ndarray
+            The substrate
+        """
+        # useful variables
+        N_mesh = 200
+        L_box = 50
+        xi = 0.2
+
+        mp = None
+
+        # lattice points
+        x, y = np.meshgrid(np.linspace(0, L_box, N_mesh), np.linspace(0, L_box, N_mesh))
+
+        for k in range(10):
+            # triangle
+            f = 0.71
+            x0 = 23
+            side_1 = 0.5 * (1 - np.tanh((f * (x + x0) - y) / (20 * xi)))
+            side_2 = 0.5 * (1 - np.tanh((y + (f * (x + x0) - 50)) / (20 * xi)))
+            triangle = side_1 + 2 * side_2
+            triangle = np.where(triangle > 1 + 1e-4, 1, triangle)
+
+            scaled_triangle = zoom(triangle, zoom=0.23, order=0)
+            final = np.ones(triangle.shape)
+            q = scaled_triangle.shape[0] // 2
+            y0 = N_mesh // 2
+            x0 = N_mesh // 2 + 13
+            final[y0 - q : y0 + q, x0 - q : x0 + q] = scaled_triangle
+
+            if k == 0:
+                mp = final
+
+            else:
+                # q = 22 for narrow
+                # q = 20 for wide
+                q = 22
+                mp += np.roll(final, -k * q, axis=1)
+                mp -= 1
+        mp = np.where(mp < 0.4, 0, mp)
         return mp
